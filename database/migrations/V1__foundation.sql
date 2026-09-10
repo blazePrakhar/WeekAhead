@@ -1,0 +1,5 @@
+-- WeekAhead Phase 1 database foundation.
+--
+-- This migration intentionally does not create application tables.
+-- Feature-specific schema migrations will be introduced with
+-- their corresponding modules.

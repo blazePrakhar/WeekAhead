@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: weekahead-backend
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: filesystem:${FLYWAY_MIGRATIONS_PATH:../database/migrations}
+    validate-on-migrate: true
+
+server:
+  port: 8080
