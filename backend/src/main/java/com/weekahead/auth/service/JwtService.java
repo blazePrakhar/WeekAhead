@@ -13,8 +13,8 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 
-    private final SecretKey secretKey =
-            Keys.hmacShaKeyFor(
+    private final SecretKey secretKey
+            = Keys.hmacShaKeyFor(
                     "weekahead-development-secret-key-change-this"
                             .getBytes());
 
@@ -31,8 +31,18 @@ public class JwtService {
                 .expiration(
                         new Date(
                                 now.toEpochMilli()
-                                        + accessTokenExpirationMs))
+                                + accessTokenExpirationMs))
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public String extractEmail(String token) {
+
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 }

@@ -1,5 +1,7 @@
 package com.weekahead.health;
 
+import org.springframework.boot.test.mock.mockito.MockBean;
+import com.weekahead.auth.service.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,6 +18,9 @@ import com.weekahead.config.SecurityConfig;
 @AutoConfigureMockMvc(addFilters = false)
 @Import(SecurityConfig.class)
 class HealthControllerTest {
+
+    @MockBean
+    private JwtService jwtService;
 
     @Autowired
     private MockMvc mockMvc;
