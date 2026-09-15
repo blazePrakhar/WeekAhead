@@ -3,6 +3,8 @@ package com.weekahead.auth.service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.weekahead.auth.dto.LoginRequest;
+import com.weekahead.auth.dto.LoginResponse;
 import com.weekahead.auth.dto.RegisterRequest;
 import com.weekahead.auth.dto.RegisterResponse;
 import com.weekahead.auth.entity.Role;
@@ -45,4 +47,27 @@ public class AuthService {
 
         return new RegisterResponse("Registration successful");
     }
+
+    public LoginResponse login(LoginRequest request) {
+
+        String email = request.email().trim().toLowerCase();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(()
+                        -> new IllegalArgumentException("Invalid email or password"));
+
+        if (!passwordEncoder.matches(
+                request.password(),
+                user.getPasswordHash())) {
+
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new IllegalArgumentException("User account is disabled");
+        }
+
+        return new LoginResponse("Login successful");
+    }
+    
 }
