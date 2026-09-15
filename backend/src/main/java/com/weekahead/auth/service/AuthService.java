@@ -17,13 +17,16 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public RegisterResponse register(RegisterRequest request) {
@@ -67,7 +70,16 @@ public class AuthService {
             throw new IllegalArgumentException("User account is disabled");
         }
 
-        return new LoginResponse("Login successful");
+        String accessToken
+                = jwtService.generateAccessToken(
+                        user.getId(),
+                        user.getEmail()
+                );
+
+        return new LoginResponse(
+                "Login successful",
+                accessToken
+        );
     }
-    
+
 }
