@@ -1,3 +1,4 @@
+import RegisterPage from "../pages/RegisterPage";
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { getHealth } from "../api/healthApi";
@@ -50,6 +51,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<FoundationPage />} />
+
+      <Route path="/register" element={<RegisterPage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
