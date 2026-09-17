@@ -55,6 +55,8 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/login" element={<LoginPage />} />
 
+      <Route path="/register" element={<RegisterPage />} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

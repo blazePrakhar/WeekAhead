@@ -101,6 +101,7 @@ function RegisterPage() {
           </div>
 
           {serverError && <p>{serverError}</p>}
+
           {successMessage && <p>{successMessage}</p>}
 
           <button type="submit" disabled={isSubmitting}>
