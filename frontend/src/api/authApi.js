@@ -10,3 +10,8 @@ export async function loginUser(credentials) {
 
   return response.data;
 }
+
+export async function getCurrentUser() {
+  const response = await apiClient.get("/api/auth/me");
+  return response.data;
+}

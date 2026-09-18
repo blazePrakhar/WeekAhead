@@ -8,15 +8,21 @@ import {
 
 export function AuthProvider({ children }) {
   const [accessToken, setAccessTokenState] = useState(getAccessToken());
+  const [currentUser, setCurrentUser] = useState(null);
 
   const login = (token) => {
     setAccessToken(token);
     setAccessTokenState(token);
   };
 
+  const updateCurrentUser = (user) => {
+    setCurrentUser(user);
+  };
+
   const logout = () => {
     clearAccessToken();
     setAccessTokenState(null);
+    setCurrentUser(null);
   };
 
   const isAuthenticated = Boolean(accessToken);
@@ -25,8 +31,10 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         accessToken,
+        currentUser,
         isAuthenticated,
         login,
+        updateCurrentUser,
         logout,
       }}
     >

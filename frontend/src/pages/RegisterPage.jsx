@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../api/authApi";
+import { getApiErrorMessage } from "../api/errorHandler";
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -40,13 +41,11 @@ function RegisterPage() {
         setServerError("An account with this email already exists.");
       } else if (error.response?.status === 400) {
         setServerError(
-          error.response.data?.message ||
-            "Please check your registration details.",
+          getApiErrorMessage(error, "Please check your registration details."),
         );
       } else {
         setServerError(
-          error.response?.data?.message ||
-            "Registration failed. Please try again.",
+          getApiErrorMessage(error, "Registration failed. Please try again."),
         );
       }
     }

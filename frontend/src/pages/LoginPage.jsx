@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { loginUser } from "../api/authApi";
+import { getCurrentUser, loginUser } from "../api/authApi";
 import { useAuth } from "../context/useAuth";
+import { getApiErrorMessage } from "../api/errorHandler";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, updateCurrentUser, logout } = useAuth();
 
   const [serverError, setServerError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -34,17 +35,26 @@ function LoginPage() {
 
       login(response.accessToken);
 
+      try {
+        const currentUser = await getCurrentUser();
+        updateCurrentUser(currentUser);
+      } catch (error) {
+        logout();
+        throw error;
+      }
+
       setSuccessMessage("Login successful.");
+      navigate("/home");
     } catch (error) {
       if (error.response?.status === 401) {
         setServerError("Invalid email or password.");
       } else if (error.response?.status === 400) {
         setServerError(
-          error.response.data?.message || "Please check your login details.",
+          getApiErrorMessage(error, "Please check your login details."),
         );
       } else {
         setServerError(
-          error.response?.data?.message || "Login failed. Please try again.",
+          getApiErrorMessage(error, "Login failed. Please try again."),
         );
       }
     }
@@ -78,7 +88,6 @@ function LoginPage() {
 
             {errors.email && <p>{errors.email.message}</p>}
           </div>
-
           <div>
             <label htmlFor="password">Password</label>
 
@@ -97,7 +106,6 @@ function LoginPage() {
 
             {errors.password && <p>{errors.password.message}</p>}
           </div>
-
           {serverError && <p>{serverError}</p>}
           {successMessage && <p>{successMessage}</p>}
 
