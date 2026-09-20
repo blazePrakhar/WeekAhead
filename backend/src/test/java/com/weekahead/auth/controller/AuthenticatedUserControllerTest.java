@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-
+import io.jsonwebtoken.JwtException;
 import com.weekahead.auth.entity.Role;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.entity.UserStatus;
@@ -36,6 +36,18 @@ class AuthenticatedUserControllerTest {
     @Test
     void shouldReturn401WhenNoJwtIsProvided() throws Exception {
         mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturn401WhenInvalidJwtIsProvided() throws Exception {
+        when(jwtService.extractEmail("invalid-token"))
+                .thenThrow(new JwtException("Invalid token"));
+
+        mockMvc.perform(
+                get("/api/auth/me")
+                        .header("Authorization", "Bearer invalid-token")
+        )
                 .andExpect(status().isUnauthorized());
     }
 
