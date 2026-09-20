@@ -1,15 +1,16 @@
 import { useState } from "react";
+
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+
 import { loginUser } from "../api/authApi";
 import { useAuth } from "../context/useAuth";
 
 function LoginPage() {
-  const navigate = useNavigate();
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [serverError, setServerError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const {
     register,
@@ -24,7 +25,6 @@ function LoginPage() {
 
   const onSubmit = async (data) => {
     setServerError("");
-    setSuccessMessage("");
 
     try {
       const response = await loginUser({
@@ -34,7 +34,7 @@ function LoginPage() {
 
       login(response.accessToken);
 
-      setSuccessMessage("Login successful.");
+      navigate("/life-areas");
     } catch (error) {
       if (error.response?.status === 401) {
         setServerError("Invalid email or password.");
@@ -99,7 +99,6 @@ function LoginPage() {
           </div>
 
           {serverError && <p>{serverError}</p>}
-          {successMessage && <p>{successMessage}</p>}
 
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Logging in..." : "Login"}
