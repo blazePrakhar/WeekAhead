@@ -73,3 +73,252 @@ select {
   font-size: 1.05rem;
   line-height: 1.6;
 }
+
+.life-areas-page {
+  width: min(960px, 100%);
+  padding: 2.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 8%);
+}
+
+.life-areas-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.life-areas-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.1;
+}
+
+.page-description {
+  max-width: 620px;
+  margin: 0.75rem 0 0;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-button {
+  flex-shrink: 0;
+  background: #1f2937;
+  color: #ffffff;
+}
+
+.primary-button:hover {
+  background: #111827;
+}
+
+.secondary-button {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.secondary-button:hover {
+  background: #e2e8f0;
+}
+
+.danger-button {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.danger-button:hover {
+  background: #fee2e2;
+}
+
+.life-areas-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.life-area-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.life-area-content h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.life-area-content p {
+  margin: 0.4rem 0 0;
+  color: #64748b;
+}
+
+.life-area-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.life-areas-empty {
+  padding: 3rem 2rem;
+  text-align: center;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.life-areas-empty h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.life-areas-empty p {
+  max-width: 480px;
+  margin: 0.75rem auto 1.5rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.life-areas-status {
+  padding: 2rem;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.life-areas-status p {
+  margin: 0;
+}
+
+.life-areas-status-error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+@media (max-width: 700px) {
+  .life-areas-page {
+    padding: 1.5rem;
+  }
+
+  .life-areas-header {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .life-area-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .life-area-actions {
+    width: 100%;
+  }
+
+  .life-area-actions button {
+    flex: 1;
+  }
+}
+
+.life-area-form-card {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.life-area-form-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.life-area-form-header p {
+  margin: 0.5rem 0 1.5rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.form-field {
+  margin-bottom: 1.25rem;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.form-field input {
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
+  outline: none;
+}
+
+.form-field input:focus {
+  border-color: #64748b;
+  box-shadow: 0 0 0 3px rgb(100 116 139 / 12%);
+}
+
+.form-error {
+  margin: 0.5rem 0 0;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.life-area-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.life-areas-success {
+  margin-bottom: 1.5rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.life-areas-success p {
+  margin: 0;
+}
+
+.life-area-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 700px) {
+  .life-area-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .life-area-form-actions button {
+    width: 100%;
+  }
+}

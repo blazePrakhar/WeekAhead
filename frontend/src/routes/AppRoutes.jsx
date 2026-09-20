@@ -3,6 +3,7 @@ import RegisterPage from "../pages/RegisterPage";
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { getHealth } from "../api/healthApi";
+import LifeAreasPage from "../pages/LifeAreasPage";
 
 function FoundationPage() {
   const [backendStatus, setBackendStatus] = useState("Checking...");
@@ -54,6 +55,7 @@ function AppRoutes() {
       <Route path="/" element={<FoundationPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/life-areas" element={<LifeAreasPage />} />
 
       <Route path="/register" element={<RegisterPage />} />
 
