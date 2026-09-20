@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
+
 import {
   getLifeAreas,
   createLifeArea,
   updateLifeArea,
   deleteLifeArea,
 } from "../api/lifeAreaApi";
+
+import { useAuth } from "../context/useAuth";
 
 const defaultValues = {
   name: "",
@@ -16,6 +20,9 @@ const defaultValues = {
 };
 
 function LifeAreasPage() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
   const [lifeAreas, setLifeAreas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -170,6 +177,11 @@ function LifeAreasPage() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
   if (loading) {
     return (
       <main className="life-areas-page">
@@ -200,6 +212,14 @@ function LifeAreasPage() {
             time constraints.
           </p>
         </div>
+
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
       </section>
 
       {success && (
