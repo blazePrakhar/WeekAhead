@@ -6,6 +6,7 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import LifeAreasPage from "../pages/LifeAreasPage";
 import ProtectedRoute from "./ProtectedRoute";
+import WeeklyAvailabilityPage from "../pages/WeeklyAvailabilityPage";
 
 function FoundationPage() {
   const [backendStatus, setBackendStatus] = useState("Checking...");
@@ -62,6 +63,10 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/life-areas" element={<LifeAreasPage />} />
+        <Route
+          path="/weekly-availability"
+          element={<WeeklyAvailabilityPage />}
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
