@@ -1,0 +1,5 @@
+ALTER TABLE life_areas
+    ADD COLUMN weight INT NOT NULL,
+    ADD COLUMN min_minutes INT NOT NULL,
+    ADD COLUMN max_minutes INT NOT NULL,
+    ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;
