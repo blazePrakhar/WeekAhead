@@ -1,7 +1,9 @@
 package com.weekahead.week.service;
 
 import java.time.LocalDate;
+import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import com.weekahead.auth.entity.User;
@@ -91,6 +93,17 @@ public class WeekService {
                 ));
 
         return toResponse(week);
+    }
+
+    public List<Week> getLatestCompletedWeeks() {
+        User currentUser = currentUserService.getCurrentUser();
+
+        return weekRepository
+                .findByUserIdAndWeekEndDateBeforeOrderByWeekEndDateDesc(
+                        currentUser.getId(),
+                        LocalDate.now(),
+                        PageRequest.of(0, 4)
+                );
     }
 
     private WeekResponse toResponse(Week week) {
