@@ -14,3 +14,15 @@ export async function createWeek(week) {
   const response = await apiClient.post("/api/weeks", week);
   return response.data;
 }
+
+export async function generateRecommendation(weekId) {
+  const response = await apiClient.post(
+    `/api/weeks/${weekId}/recommendation/generate`,
+  );
+  return response.data;
+}
+
+export async function getAllocations(weekId) {
+  const response = await apiClient.get(`/api/weeks/${weekId}/allocations`);
+  return response.data;
+}

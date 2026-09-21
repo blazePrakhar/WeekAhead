@@ -7,6 +7,7 @@ import RegisterPage from "../pages/RegisterPage";
 import LifeAreasPage from "../pages/LifeAreasPage";
 import ProtectedRoute from "./ProtectedRoute";
 import WeeklyAvailabilityPage from "../pages/WeeklyAvailabilityPage";
+import TimeAllocationPage from "../pages/TimeAllocationPage";
 
 function FoundationPage() {
   const [backendStatus, setBackendStatus] = useState("Checking...");
@@ -67,6 +68,7 @@ function AppRoutes() {
           path="/weekly-availability"
           element={<WeeklyAvailabilityPage />}
         />
+        <Route path="/time-allocation" element={<TimeAllocationPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
