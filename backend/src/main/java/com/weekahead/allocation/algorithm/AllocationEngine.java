@@ -1,144 +1,230 @@
 package com.weekahead.allocation.algorithm;
 
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@Service
 public class AllocationEngine {
 
     public AllocationResult calculate(AllocationInput input) {
 
         validateInput(input);
 
-        int discretionaryMinutes =
-                input.availableMinutes() - input.fixedCommitmentMinutes();
+        int discretionaryMinutes
+                = input.availableMinutes() - input.fixedCommitmentMinutes();
 
-        validateMinimums(input.lifeAreas(), discretionaryMinutes);
+        List<LifeAreaAllocationInput> lifeAreas
+                = input.lifeAreas()
+                        .stream()
+                        .sorted(Comparator.comparing(
+                                LifeAreaAllocationInput::lifeAreaId
+                        ))
+                        .toList();
 
-        List<WorkingAllocation> workingAllocations =
-                initializeAllocations(input.lifeAreas());
+        int minimumTotal = lifeAreas.stream()
+                .mapToInt(LifeAreaAllocationInput::minMinutes)
+                .sum();
 
-        int remainingMinutes =
-                discretionaryMinutes
-                        - workingAllocations.stream()
-                        .mapToInt(WorkingAllocation::allocatedMinutes)
-                        .sum();
+        if (minimumTotal > discretionaryMinutes) {
+            throw new IllegalArgumentException(
+                    "Minimum minutes exceed discretionary minutes"
+            );
+        }
+
+        Map<Long, Integer> allocations = new HashMap<>();
+
+        for (LifeAreaAllocationInput lifeArea : lifeAreas) {
+            allocations.put(
+                    lifeArea.lifeAreaId(),
+                    lifeArea.minMinutes()
+            );
+        }
+
+        int remainingMinutes
+                = discretionaryMinutes - minimumTotal;
 
         while (remainingMinutes > 0) {
 
-            List<WorkingAllocation> eligible =
-                    workingAllocations.stream()
-                            .filter(WorkingAllocation::canReceiveMore)
+            List<LifeAreaAllocationInput> eligibleAreas
+                    = lifeAreas.stream()
+                            .filter(area
+                                    -> allocations.get(area.lifeAreaId())
+                            < area.maxMinutes()
+                            )
                             .toList();
 
-            if (eligible.isEmpty()) {
+            if (eligibleAreas.isEmpty()) {
                 throw new IllegalArgumentException(
                         "Unable to allocate all discretionary minutes within maximum limits"
                 );
             }
 
-            long totalWeight = eligible.stream()
-                    .mapToLong(allocation ->
-                            allocation.input().weight()
-                    )
+            int eligibleWeightTotal = eligibleAreas.stream()
+                    .mapToInt(LifeAreaAllocationInput::weight)
                     .sum();
 
-            List<WeightedShare> shares = new ArrayList<>();
+            Map<Long, Integer> additionalMinutes
+                    = new HashMap<>();
 
-            for (WorkingAllocation allocation : eligible) {
+            Map<Long, Long> remainders
+                    = new HashMap<>();
 
-                long numerator =
-                        (long) remainingMinutes
-                                * allocation.input().weight();
+            int distributedThisRound = 0;
 
-                long floorShare = numerator / totalWeight;
-                long remainder = numerator % totalWeight;
+            for (LifeAreaAllocationInput area : eligibleAreas) {
 
-                int capacity =
-                        allocation.input().maxMinutes()
-                                - allocation.allocatedMinutes();
+                int currentMinutes
+                        = allocations.get(area.lifeAreaId());
 
-                int share = (int) Math.min(
-                        floorShare,
-                        capacity
+                int remainingCapacity
+                        = area.maxMinutes() - currentMinutes;
+
+                long numerator
+                        = (long) remainingMinutes * area.weight();
+
+                int share
+                        = (int) (numerator / eligibleWeightTotal);
+
+                long remainder
+                        = numerator % eligibleWeightTotal;
+
+                share = Math.min(share, remainingCapacity);
+
+                additionalMinutes.put(
+                        area.lifeAreaId(),
+                        share
                 );
 
-                shares.add(
-                        new WeightedShare(
-                                allocation,
-                                share,
-                                remainder
-                        )
+                remainders.put(
+                        area.lifeAreaId(),
+                        remainder
+                );
+
+                distributedThisRound += share;
+            }
+
+            for (LifeAreaAllocationInput area : eligibleAreas) {
+
+                int currentMinutes
+                        = allocations.get(area.lifeAreaId());
+
+                int additional
+                        = additionalMinutes.get(area.lifeAreaId());
+
+                allocations.put(
+                        area.lifeAreaId(),
+                        currentMinutes + additional
                 );
             }
 
-            int distributed = 0;
-
-            for (WeightedShare share : shares) {
-                share.allocation().addMinutes(share.floorShare());
-                distributed += share.floorShare();
-            }
-
-            remainingMinutes -= distributed;
+            remainingMinutes -= distributedThisRound;
 
             if (remainingMinutes > 0) {
 
-                shares.stream()
-                        .filter(share ->
-                                share.allocation().canReceiveMore()
-                        )
-                        .sorted(
-                                Comparator
-                                        .comparingLong(
-                                                WeightedShare::remainder
-                                        )
-                                        .reversed()
-                                        .thenComparing(
-                                                share -> share.allocation()
-                                                        .input()
-                                                        .lifeAreaId()
-                                        )
-                        )
-                        .limit(remainingMinutes)
-                        .forEach(share -> {
-                            share.allocation().addMinutes(1);
-                        });
+                List<LifeAreaAllocationInput> remainderOrder
+                        = new ArrayList<>(eligibleAreas);
 
-                int redistributed = Math.min(
-                        remainingMinutes,
-                        (int) shares.stream()
-                                .filter(share ->
-                                        share.allocation().canReceiveMore()
+                remainderOrder.sort(
+                        Comparator
+                                .comparing(
+                                        (LifeAreaAllocationInput area)
+                                        -> remainders.get(
+                                                area.lifeAreaId()
+                                        )
                                 )
-                                .count()
+                                .reversed()
+                                .thenComparing(
+                                        LifeAreaAllocationInput::lifeAreaId
+                                )
                 );
 
-                remainingMinutes -= redistributed;
+                boolean assignedRemainder = false;
+
+                for (LifeAreaAllocationInput area : remainderOrder) {
+
+                    int currentMinutes
+                            = allocations.get(area.lifeAreaId());
+
+                    if (currentMinutes < area.maxMinutes()) {
+
+                        allocations.put(
+                                area.lifeAreaId(),
+                                currentMinutes + 1
+                        );
+
+                        remainingMinutes--;
+                        assignedRemainder = true;
+
+                        if (remainingMinutes == 0) {
+                            break;
+                        }
+                    }
+                }
+
+                if (!assignedRemainder) {
+                    throw new IllegalArgumentException(
+                            "Unable to allocate all discretionary minutes within maximum limits"
+                    );
+                }
+            }
+
+            if (distributedThisRound == 0 && remainingMinutes > 0) {
+
+                boolean assignedMinute = false;
+
+                for (LifeAreaAllocationInput area : eligibleAreas) {
+
+                    int currentMinutes
+                            = allocations.get(area.lifeAreaId());
+
+                    if (currentMinutes < area.maxMinutes()) {
+
+                        allocations.put(
+                                area.lifeAreaId(),
+                                currentMinutes + 1
+                        );
+
+                        remainingMinutes--;
+                        assignedMinute = true;
+                        break;
+                    }
+                }
+
+                if (!assignedMinute) {
+                    throw new IllegalArgumentException(
+                            "Unable to allocate all discretionary minutes within maximum limits"
+                    );
+                }
             }
         }
 
-        List<AllocationResultItem> resultItems =
-                workingAllocations.stream()
-                        .map(allocation ->
-                                new AllocationResultItem(
-                                        allocation.input().lifeAreaId(),
-                                        allocation.input().name(),
-                                        allocation.input().weight(),
-                                        allocation.input().minMinutes(),
-                                        allocation.input().maxMinutes(),
-                                        allocation.allocatedMinutes()
-                                )
-                        )
+        List<AllocationResultItem> resultItems
+                = lifeAreas.stream()
+                        .map(area -> new AllocationResultItem(
+                        area.lifeAreaId(),
+                        area.name(),
+                        area.weight(),
+                        area.minMinutes(),
+                        area.maxMinutes(),
+                        allocations.get(area.lifeAreaId())
+                ))
                         .toList();
 
-        int totalRecommendedMinutes =
-                resultItems.stream()
-                        .mapToInt(AllocationResultItem::recommendedMinutes)
+        int totalRecommendedMinutes
+                = resultItems.stream()
+                        .mapToInt(
+                                AllocationResultItem::recommendedMinutes
+                        )
                         .sum();
 
         if (totalRecommendedMinutes != discretionaryMinutes) {
-            throw new IllegalStateException(
-                    "Allocation total does not match discretionary minutes"
+            throw new IllegalArgumentException(
+                    "Unable to allocate all discretionary minutes within maximum limits"
             );
         }
 
@@ -181,116 +267,37 @@ public class AllocationEngine {
         if (input.lifeAreas() == null
                 || input.lifeAreas().isEmpty()) {
             throw new IllegalArgumentException(
-                    "At least one life area is required"
+                    "At least one Life Area is required"
             );
         }
 
-        for (LifeAreaAllocationInput lifeArea : input.lifeAreas()) {
+        for (LifeAreaAllocationInput area : input.lifeAreas()) {
 
-            if (lifeArea == null) {
+            if (area.lifeAreaId() == null) {
                 throw new IllegalArgumentException(
-                        "Life area cannot be null"
+                        "Life Area id is required"
                 );
             }
 
-            if (lifeArea.lifeAreaId() == null) {
+            if (area.weight() == null || area.weight() <= 0) {
                 throw new IllegalArgumentException(
-                        "Life area id is required"
+                        "Life Area weight must be greater than 0"
                 );
             }
 
-            if (lifeArea.weight() == null
-                    || lifeArea.weight() <= 0) {
+            if (area.minMinutes() == null
+                    || area.minMinutes() < 0) {
                 throw new IllegalArgumentException(
-                        "Life area weight must be greater than 0"
+                        "Minimum minutes must be at least 0"
                 );
             }
 
-            if (lifeArea.minMinutes() == null
-                    || lifeArea.minMinutes() < 0) {
+            if (area.maxMinutes() == null
+                    || area.maxMinutes() < area.minMinutes()) {
                 throw new IllegalArgumentException(
-                        "Life area minimum minutes must be at least 0"
+                        "Maximum minutes cannot be less than minimum minutes"
                 );
             }
-
-            if (lifeArea.maxMinutes() == null
-                    || lifeArea.maxMinutes() < lifeArea.minMinutes()) {
-                throw new IllegalArgumentException(
-                        "Life area maximum minutes cannot be less than minimum minutes"
-                );
-            }
-        }
-    }
-
-    private void validateMinimums(
-            List<LifeAreaAllocationInput> lifeAreas,
-            int discretionaryMinutes
-    ) {
-
-        long totalMinimums = lifeAreas.stream()
-                .mapToLong(LifeAreaAllocationInput::minMinutes)
-                .sum();
-
-        if (totalMinimums > discretionaryMinutes) {
-            throw new IllegalArgumentException(
-                    "Life area minimum minutes exceed discretionary minutes"
-            );
-        }
-    }
-
-    private List<WorkingAllocation> initializeAllocations(
-            List<LifeAreaAllocationInput> inputs
-    ) {
-
-        return inputs.stream()
-                .sorted(
-                        Comparator.comparing(
-                                LifeAreaAllocationInput::lifeAreaId
-                        )
-                )
-                .map(input ->
-                        new WorkingAllocation(
-                                input,
-                                input.minMinutes()
-                        )
-                )
-                .toList();
-    }
-
-    private record WeightedShare(
-            WorkingAllocation allocation,
-            int floorShare,
-            long remainder
-    ) {
-    }
-
-    private static final class WorkingAllocation {
-
-        private final LifeAreaAllocationInput input;
-        private int allocatedMinutes;
-
-        private WorkingAllocation(
-                LifeAreaAllocationInput input,
-                int allocatedMinutes
-        ) {
-            this.input = input;
-            this.allocatedMinutes = allocatedMinutes;
-        }
-
-        private LifeAreaAllocationInput input() {
-            return input;
-        }
-
-        private int allocatedMinutes() {
-            return allocatedMinutes;
-        }
-
-        private void addMinutes(int minutes) {
-            allocatedMinutes += minutes;
-        }
-
-        private boolean canReceiveMore() {
-            return allocatedMinutes < input.maxMinutes();
         }
     }
 }

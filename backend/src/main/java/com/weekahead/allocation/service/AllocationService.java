@@ -7,12 +7,13 @@ import com.weekahead.allocation.algorithm.AllocationResultItem;
 import com.weekahead.allocation.algorithm.LifeAreaAllocationInput;
 import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
+import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
-import com.weekahead.auth.entity.User;
 import com.weekahead.week.entity.Week;
 import com.weekahead.week.repository.WeekRepository;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +45,7 @@ public class AllocationService {
     }
 
     @Transactional
-    public AllocationResult generateRecommendation(Long weekId) {
+    public AllocationSnapshot generateRecommendation(Long weekId) {
 
         User user = currentUserService.getCurrentUser();
 
@@ -109,15 +110,15 @@ public class AllocationService {
             weeklyAllocationRepository.save(allocation);
         }
 
-        return result;
+        return new AllocationSnapshot(week, result);
     }
 
     @Transactional(readOnly = true)
-    public List<WeeklyAllocation> getAllocations(Long weekId) {
+    public AllocationSnapshot getAllocations(Long weekId) {
 
         User user = currentUserService.getCurrentUser();
 
-        weekRepository.findByIdAndUserId(weekId, user.getId())
+        Week week = weekRepository.findByIdAndUserId(weekId, user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Week not found"));
 
         List<WeeklyAllocation> allocations =
@@ -130,7 +131,32 @@ public class AllocationService {
             );
         }
 
-        return allocations;
+        List<AllocationResultItem> resultItems = allocations.stream()
+                .map(allocation -> new AllocationResultItem(
+                        allocation.getLifeArea().getId(),
+                        allocation.getLifeArea().getName(),
+                        allocation.getLifeArea().getWeight(),
+                        allocation.getLifeArea().getMinMinutes(),
+                        allocation.getLifeArea().getMaxMinutes(),
+                        allocation.getRecommendedMinutes()
+                ))
+                .toList();
+
+        int totalRecommendedMinutes = resultItems.stream()
+                .mapToInt(AllocationResultItem::recommendedMinutes)
+                .sum();
+
+        int discretionaryMinutes =
+                week.getAvailableMinutes()
+                        - week.getFixedCommitmentMinutes();
+
+        AllocationResult result = new AllocationResult(
+                discretionaryMinutes,
+                totalRecommendedMinutes,
+                resultItems
+        );
+
+        return new AllocationSnapshot(week, result);
     }
 
     private String buildExplanation(AllocationResultItem item) {
