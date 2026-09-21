@@ -1,11 +1,14 @@
 package com.weekahead.timetracking.repository;
 
-import com.weekahead.timetracking.entity.TimeLog;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import com.weekahead.timetracking.entity.TimeLog;
 
 public interface TimeLogRepository extends JpaRepository<TimeLog, Long> {
 
@@ -22,5 +25,18 @@ public interface TimeLogRepository extends JpaRepository<TimeLog, Long> {
             LocalDate from,
             LocalDate to,
             Long lifeAreaId
+    );
+
+    @Query("""
+            SELECT tl.lifeArea.id, SUM(tl.durationMinutes)
+            FROM TimeLog tl
+            WHERE tl.user.id = :userId
+              AND tl.logDate BETWEEN :from AND :to
+            GROUP BY tl.lifeArea.id
+            """)
+    List<Object[]> sumDurationByLifeArea(
+            @Param("userId") Long userId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to
     );
 }
