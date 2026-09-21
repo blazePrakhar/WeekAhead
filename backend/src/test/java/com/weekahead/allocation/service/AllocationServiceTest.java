@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,7 +76,6 @@ class AllocationServiceTest {
         );
 
         lifeArea = mock(LifeArea.class);
-
     }
 
     private void stubActiveLifeArea() {
@@ -90,6 +89,7 @@ class AllocationServiceTest {
 
     @Test
     void shouldGenerateRecommendationForAuthenticatedUser() {
+
         stubActiveLifeArea();
 
         when(currentUserService.getCurrentUser())
@@ -123,11 +123,12 @@ class AllocationServiceTest {
                 .findByWeekIdAndLifeAreaId(1L, lifeArea.getId()))
                 .thenReturn(Optional.empty());
 
-        AllocationResult actual
+        AllocationSnapshot actual
                 = allocationService.generateRecommendation(1L);
 
-        assertEquals(500, actual.totalRecommendedMinutes());
-        assertEquals(1, actual.allocations().size());
+        assertEquals(week, actual.week());
+        assertEquals(500, actual.result().totalRecommendedMinutes());
+        assertEquals(1, actual.result().allocations().size());
 
         verify(weeklyAllocationRepository)
                 .save(any(WeeklyAllocation.class));
@@ -138,6 +139,7 @@ class AllocationServiceTest {
 
     @Test
     void shouldIgnoreInactiveLifeAreas() {
+
         stubActiveLifeArea();
 
         when(currentUserService.getCurrentUser())
@@ -148,7 +150,8 @@ class AllocationServiceTest {
 
         LifeArea inactiveLifeArea = mock(LifeArea.class);
 
-        when(inactiveLifeArea.getIsActive()).thenReturn(false);
+        when(inactiveLifeArea.getIsActive())
+                .thenReturn(false);
 
         when(lifeAreaRepository.findAllByUserId(user.getId()))
                 .thenReturn(List.of(lifeArea, inactiveLifeArea));
@@ -182,9 +185,11 @@ class AllocationServiceTest {
                         com.weekahead.allocation.algorithm.AllocationInput.class
                 );
 
-        verify(allocationEngine).calculate(captor.capture());
+        verify(allocationEngine)
+                .calculate(captor.capture());
 
         assertEquals(1, captor.getValue().lifeAreas().size());
+
         assertEquals(
                 lifeArea.getId(),
                 captor.getValue().lifeAreas().get(0).lifeAreaId()
@@ -242,6 +247,7 @@ class AllocationServiceTest {
 
     @Test
     void shouldPreservePlannedAndActualMinutesDuringRegeneration() {
+
         stubActiveLifeArea();
 
         when(currentUserService.getCurrentUser())
@@ -286,7 +292,11 @@ class AllocationServiceTest {
                 .findByWeekIdAndLifeAreaId(1L, lifeArea.getId()))
                 .thenReturn(Optional.of(existingAllocation));
 
-        allocationService.generateRecommendation(1L);
+        AllocationSnapshot actual
+                = allocationService.generateRecommendation(1L);
+
+        assertEquals(week, actual.week());
+        assertEquals(500, actual.result().totalRecommendedMinutes());
 
         assertEquals(500, existingAllocation.getRecommendedMinutes());
         assertEquals(400, existingAllocation.getPlannedMinutes());
@@ -306,6 +316,12 @@ class AllocationServiceTest {
         when(weekRepository.findByIdAndUserId(1L, user.getId()))
                 .thenReturn(Optional.of(week));
 
+        when(lifeArea.getId()).thenReturn(1L);
+        when(lifeArea.getName()).thenReturn("Career");
+        when(lifeArea.getWeight()).thenReturn(1);
+        when(lifeArea.getMinMinutes()).thenReturn(60);
+        when(lifeArea.getMaxMinutes()).thenReturn(300);
+
         WeeklyAllocation allocation
                 = new WeeklyAllocation(
                         week,
@@ -321,11 +337,22 @@ class AllocationServiceTest {
                 .findAllByWeekIdOrderByLifeAreaIdAsc(1L))
                 .thenReturn(List.of(allocation));
 
-        List<WeeklyAllocation> result
+        AllocationSnapshot result
                 = allocationService.getAllocations(1L);
 
-        assertEquals(1, result.size());
-        assertEquals(500, result.get(0).getRecommendedMinutes());
+        assertEquals(week, result.week());
+        assertEquals(
+                1,
+                result.result().allocations().size()
+        );
+        assertEquals(
+                500,
+                result.result().allocations().get(0).recommendedMinutes()
+        );
+        assertEquals(
+                500,
+                result.result().totalRecommendedMinutes()
+        );
     }
 
     @Test
