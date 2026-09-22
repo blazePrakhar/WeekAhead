@@ -10,6 +10,7 @@ import WeeklyAvailabilityPage from "../pages/WeeklyAvailabilityPage";
 import TimeAllocationPage from "../pages/TimeAllocationPage";
 import TimeLogsPage from "../pages/TimeLogsPage";
 import InsightsPage from "../pages/InsightsPage";
+import RebalancingPage from "../pages/RebalancingPage";
 
 function FoundationPage() {
   const [backendStatus, setBackendStatus] = useState("Checking...");
@@ -73,6 +74,7 @@ function AppRoutes() {
         <Route path="/time-allocation" element={<TimeAllocationPage />} />
         <Route path="/time-logs" element={<TimeLogsPage />} />
         <Route path="/insights" element={<InsightsPage />} />
+        <Route path="/rebalancing" element={<RebalancingPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
