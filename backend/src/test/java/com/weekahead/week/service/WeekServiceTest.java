@@ -1,16 +1,17 @@
 package com.weekahead.week.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
-
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.weekahead.auth.entity.Role;
@@ -255,5 +256,50 @@ class WeekServiceTest {
                 "Week not found",
                 exception.getMessage()
         );
+    }
+
+    @Test
+    void shouldGetLatestFourCompletedWeeks() {
+        List<Week> weeks = List.of(
+                new Week(
+                        currentUser,
+                        LocalDate.of(2026, 9, 14),
+                        LocalDate.of(2026, 9, 20),
+                        10080,
+                        7200,
+                        null
+                ),
+                new Week(
+                        currentUser,
+                        LocalDate.of(2026, 9, 7),
+                        LocalDate.of(2026, 9, 13),
+                        10080,
+                        7200,
+                        null
+                )
+        );
+
+        when(currentUserService.getCurrentUser())
+                .thenReturn(currentUser);
+
+        when(weekRepository
+                .findByUserIdAndWeekEndDateBeforeOrderByWeekEndDateDesc(
+                        org.mockito.ArgumentMatchers.eq(currentUser.getId()),
+                        org.mockito.ArgumentMatchers.eq(LocalDate.now()),
+                        org.mockito.ArgumentMatchers.any()
+                ))
+                .thenReturn(weeks);
+
+        List<Week> result = weekService.getLatestCompletedWeeks();
+
+        assertEquals(2, result.size());
+        assertEquals(weeks, result);
+
+        verify(weekRepository)
+                .findByUserIdAndWeekEndDateBeforeOrderByWeekEndDateDesc(
+                        org.mockito.ArgumentMatchers.eq(currentUser.getId()),
+                        org.mockito.ArgumentMatchers.eq(LocalDate.now()),
+                        org.mockito.ArgumentMatchers.any()
+                );
     }
 }
