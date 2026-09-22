@@ -1,5 +1,6 @@
 package com.weekahead.rebalancing.service;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,26 +47,47 @@ public class RebalancingService {
     }
 
     public List<RebalancingSuggestion> calculate() {
+        User currentUser = currentUserService.getCurrentUser();
 
-        User currentUser =
-                currentUserService.getCurrentUser();
+        LocalDate today = LocalDate.now();
 
         Week currentWeek =
                 weekRepository
                         .findByUserIdAndWeekStartDateLessThanEqualAndWeekEndDateGreaterThanEqual(
                                 currentUser.getId(),
-                                java.time.LocalDate.now(),
-                                java.time.LocalDate.now()
+                                today,
+                                today
                         )
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "Current week not found"
                         ));
 
+        return calculateForWeek(currentUser, currentWeek);
+    }
+
+    public List<RebalancingSuggestion> calculate(Long weekId) {
+        User currentUser = currentUserService.getCurrentUser();
+
+        Week week =
+                weekRepository
+                        .findByIdAndUserId(
+                                weekId,
+                                currentUser.getId()
+                        )
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Week not found"
+                        ));
+
+        return calculateForWeek(currentUser, week);
+    }
+
+    private List<RebalancingSuggestion> calculateForWeek(
+            User currentUser,
+            Week week
+    ) {
         List<WeeklyAllocation> allocations =
                 weeklyAllocationRepository
-                        .findAllByWeekIdOrderByLifeAreaIdAsc(
-                                currentWeek.getId()
-                        );
+                        .findAllByWeekIdOrderByLifeAreaIdAsc(week.getId());
 
         if (allocations.isEmpty()) {
             return List.of();
@@ -75,8 +97,8 @@ public class RebalancingService {
                 buildActualMinutesMap(
                         timeLogRepository.sumDurationByLifeArea(
                                 currentUser.getId(),
-                                currentWeek.getWeekStartDate(),
-                                currentWeek.getWeekEndDate()
+                                week.getWeekStartDate(),
+                                week.getWeekEndDate()
                         )
                 );
 
@@ -91,7 +113,6 @@ public class RebalancingService {
                                 )
                         )
                         .map(allocation -> {
-
                             LifeArea lifeArea =
                                     lifeAreasById.get(
                                             allocation.getLifeArea().getId()
@@ -122,8 +143,8 @@ public class RebalancingService {
 
         int remainingWeeklyMinutes =
                 Math.max(
-                        currentWeek.getAvailableMinutes()
-                                - currentWeek.getFixedCommitmentMinutes()
+                        week.getAvailableMinutes()
+                                - week.getFixedCommitmentMinutes()
                                 - totalLoggedMinutes,
                         0
                 );
@@ -137,39 +158,24 @@ public class RebalancingService {
     private Map<Long, Integer> buildActualMinutesMap(
             List<Object[]> rows
     ) {
-        Map<Long, Integer> result =
-                new HashMap<>();
+        Map<Long, Integer> result = new HashMap<>();
 
         for (Object[] row : rows) {
+            Long lifeAreaId = ((Number) row[0]).longValue();
+            Integer totalMinutes = ((Number) row[1]).intValue();
 
-            Long lifeAreaId =
-                    ((Number) row[0]).longValue();
-
-            int actualMinutes =
-                    ((Number) row[1]).intValue();
-
-            result.put(
-                    lifeAreaId,
-                    actualMinutes
-            );
+            result.put(lifeAreaId, totalMinutes);
         }
 
         return result;
     }
 
-    private Map<Long, LifeArea> buildLifeAreaMap(
-            Long userId
-    ) {
-        Map<Long, LifeArea> result =
-                new HashMap<>();
+    private Map<Long, LifeArea> buildLifeAreaMap(Long userId) {
+        Map<Long, LifeArea> result = new HashMap<>();
 
         for (LifeArea lifeArea :
                 lifeAreaRepository.findAllByUserId(userId)) {
-
-            result.put(
-                    lifeArea.getId(),
-                    lifeArea
-            );
+            result.put(lifeArea.getId(), lifeArea);
         }
 
         return result;
