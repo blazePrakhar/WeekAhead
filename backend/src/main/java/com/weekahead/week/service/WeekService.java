@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
 import com.weekahead.config.AnalyticsCacheInvalidationService;
@@ -22,17 +23,20 @@ public class WeekService {
     private final CurrentUserService currentUserService;
     private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
     private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+    private final AuditLogService auditLogService;
 
     public WeekService(
             WeekRepository weekRepository,
             CurrentUserService currentUserService,
             DashboardCacheInvalidationService dashboardCacheInvalidationService,
-            AnalyticsCacheInvalidationService analyticsCacheInvalidationService
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService,
+            AuditLogService auditLogService
     ) {
         this.weekRepository = weekRepository;
         this.currentUserService = currentUserService;
         this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
         this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
+        this.auditLogService = auditLogService;
     }
 
     public WeekResponse create(WeekRequest request) {
@@ -72,6 +76,14 @@ public class WeekService {
 
         dashboardCacheInvalidationService.invalidate(currentUser.getId());
         analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                currentUser,
+                "WEEK_CREATED",
+                "WEEK",
+                savedWeek.getId(),
+                "Week created"
+        );
 
         return toResponse(savedWeek);
     }

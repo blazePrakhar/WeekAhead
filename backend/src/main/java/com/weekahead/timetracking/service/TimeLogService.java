@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
 import com.weekahead.config.AnalyticsCacheInvalidationService;
@@ -27,19 +28,22 @@ public class TimeLogService {
     private final CurrentUserService currentUserService;
     private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
     private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+    private final AuditLogService auditLogService;
 
     public TimeLogService(
             TimeLogRepository timeLogRepository,
             LifeAreaRepository lifeAreaRepository,
             CurrentUserService currentUserService,
             DashboardCacheInvalidationService dashboardCacheInvalidationService,
-            AnalyticsCacheInvalidationService analyticsCacheInvalidationService
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService,
+            AuditLogService auditLogService
     ) {
         this.timeLogRepository = timeLogRepository;
         this.lifeAreaRepository = lifeAreaRepository;
         this.currentUserService = currentUserService;
         this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
         this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
+        this.auditLogService = auditLogService;
     }
 
     public TimeLogResponse create(CreateTimeLogRequest request) {
@@ -60,6 +64,14 @@ public class TimeLogService {
 
         dashboardCacheInvalidationService.invalidate(user.getId());
         analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                user,
+                "TIME_LOG_CREATED",
+                "TIME_LOG",
+                savedTimeLog.getId(),
+                "Time log created"
+        );
 
         return toResponse(savedTimeLog);
     }
@@ -85,6 +97,14 @@ public class TimeLogService {
         dashboardCacheInvalidationService.invalidate(user.getId());
         analyticsCacheInvalidationService.invalidate();
 
+        auditLogService.log(
+                user,
+                "TIME_LOG_UPDATED",
+                "TIME_LOG",
+                updatedTimeLog.getId(),
+                "Time log updated"
+        );
+
         return toResponse(updatedTimeLog);
     }
 
@@ -98,6 +118,14 @@ public class TimeLogService {
 
         dashboardCacheInvalidationService.invalidate(user.getId());
         analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                user,
+                "TIME_LOG_DELETED",
+                "TIME_LOG",
+                timeLog.getId(),
+                "Time log deleted"
+        );
     }
 
     @Transactional(readOnly = true)

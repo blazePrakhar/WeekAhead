@@ -22,6 +22,7 @@ import com.weekahead.allocation.algorithm.AllocationEngine;
 import com.weekahead.allocation.algorithm.AllocationResult;
 import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
 import com.weekahead.config.AnalyticsCacheInvalidationService;
@@ -55,6 +56,9 @@ class AllocationServiceTest {
     @Mock
     private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     private AllocationService allocationService;
 
     private User user;
@@ -70,7 +74,8 @@ class AllocationServiceTest {
                 weeklyAllocationRepository,
                 allocationEngine,
                 dashboardCacheInvalidationService,
-                analyticsCacheInvalidationService
+                analyticsCacheInvalidationService,
+                auditLogService
         );
 
         user = new User(
@@ -90,15 +95,6 @@ class AllocationServiceTest {
         );
 
         lifeArea = mock(LifeArea.class);
-    }
-
-    private void stubActiveLifeArea() {
-        when(lifeArea.getId()).thenReturn(1L);
-        when(lifeArea.getName()).thenReturn("Career");
-        when(lifeArea.getWeight()).thenReturn(1);
-        when(lifeArea.getMinMinutes()).thenReturn(60);
-        when(lifeArea.getMaxMinutes()).thenReturn(300);
-        when(lifeArea.getIsActive()).thenReturn(true);
     }
 
     @Test
@@ -155,6 +151,15 @@ class AllocationServiceTest {
 
         verify(analyticsCacheInvalidationService)
                 .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "ALLOCATION_GENERATED",
+                        "WEEK",
+                        week.getId(),
+                        "Allocation recommendation generated"
+                );
     }
 
     @Test
@@ -220,6 +225,15 @@ class AllocationServiceTest {
 
         verify(analyticsCacheInvalidationService)
                 .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "ALLOCATION_GENERATED",
+                        "WEEK",
+                        week.getId(),
+                        "Allocation recommendation generated"
+                );
     }
 
     @Test
@@ -244,6 +258,7 @@ class AllocationServiceTest {
         verifyNoInteractions(weeklyAllocationRepository);
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -273,6 +288,7 @@ class AllocationServiceTest {
         verifyNoInteractions(weeklyAllocationRepository);
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -341,6 +357,15 @@ class AllocationServiceTest {
 
         verify(analyticsCacheInvalidationService)
                 .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "ALLOCATION_GENERATED",
+                        "WEEK",
+                        week.getId(),
+                        "Allocation recommendation generated"
+                );
     }
 
     @Test
@@ -377,14 +402,17 @@ class AllocationServiceTest {
                 = allocationService.getAllocations(1L);
 
         assertEquals(week, result.week());
+
         assertEquals(
                 1,
                 result.result().allocations().size()
         );
+
         assertEquals(
                 500,
                 result.result().allocations().get(0).recommendedMinutes()
         );
+
         assertEquals(
                 500,
                 result.result().totalRecommendedMinutes()
@@ -392,6 +420,7 @@ class AllocationServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -414,6 +443,7 @@ class AllocationServiceTest {
         verifyNoInteractions(weeklyAllocationRepository);
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -442,5 +472,15 @@ class AllocationServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
+    }
+
+    private void stubActiveLifeArea() {
+        when(lifeArea.getId()).thenReturn(1L);
+        when(lifeArea.getName()).thenReturn("Career");
+        when(lifeArea.getWeight()).thenReturn(1);
+        when(lifeArea.getMinMinutes()).thenReturn(60);
+        when(lifeArea.getMaxMinutes()).thenReturn(300);
+        when(lifeArea.getIsActive()).thenReturn(true);
     }
 }

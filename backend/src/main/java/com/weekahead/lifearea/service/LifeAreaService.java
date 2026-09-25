@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
 import com.weekahead.config.AnalyticsCacheInvalidationService;
@@ -20,17 +21,20 @@ public class LifeAreaService {
     private final CurrentUserService currentUserService;
     private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
     private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+    private final AuditLogService auditLogService;
 
     public LifeAreaService(
             LifeAreaRepository lifeAreaRepository,
             CurrentUserService currentUserService,
             DashboardCacheInvalidationService dashboardCacheInvalidationService,
-            AnalyticsCacheInvalidationService analyticsCacheInvalidationService
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService,
+            AuditLogService auditLogService
     ) {
         this.lifeAreaRepository = lifeAreaRepository;
         this.currentUserService = currentUserService;
         this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
         this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
+        this.auditLogService = auditLogService;
     }
 
     public LifeAreaResponse create(LifeAreaRequest request) {
@@ -55,6 +59,14 @@ public class LifeAreaService {
 
         dashboardCacheInvalidationService.invalidate(currentUser.getId());
         analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                currentUser,
+                "LIFE_AREA_CREATED",
+                "LIFE_AREA",
+                savedLifeArea.getId(),
+                "Life area created"
+        );
 
         return toResponse(savedLifeArea);
     }
@@ -92,6 +104,14 @@ public class LifeAreaService {
         dashboardCacheInvalidationService.invalidate(currentUser.getId());
         analyticsCacheInvalidationService.invalidate();
 
+        auditLogService.log(
+                currentUser,
+                "LIFE_AREA_UPDATED",
+                "LIFE_AREA",
+                updatedLifeArea.getId(),
+                "Life area updated"
+        );
+
         return toResponse(updatedLifeArea);
     }
 
@@ -107,6 +127,14 @@ public class LifeAreaService {
 
         dashboardCacheInvalidationService.invalidate(currentUser.getId());
         analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                currentUser,
+                "LIFE_AREA_ARCHIVED",
+                "LIFE_AREA",
+                lifeArea.getId(),
+                "Life area archived"
+        );
     }
 
     private LifeAreaResponse toResponse(LifeArea lifeArea) {

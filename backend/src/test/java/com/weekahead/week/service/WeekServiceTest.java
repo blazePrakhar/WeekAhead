@@ -15,6 +15,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.Role;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.entity.UserStatus;
@@ -41,6 +42,9 @@ class WeekServiceTest {
     @Mock
     private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     private WeekService weekService;
 
     private User currentUser;
@@ -51,7 +55,8 @@ class WeekServiceTest {
                 weekRepository,
                 currentUserService,
                 dashboardCacheInvalidationService,
-                analyticsCacheInvalidationService
+                analyticsCacheInvalidationService,
+                auditLogService
         );
 
         currentUser = new User(
@@ -89,7 +94,8 @@ class WeekServiceTest {
                 startDate
         )).thenReturn(Optional.empty());
 
-        when(weekRepository.save(org.mockito.ArgumentMatchers.any(Week.class)))
+        when(weekRepository.save(
+                org.mockito.ArgumentMatchers.any(Week.class)))
                 .thenReturn(savedWeek);
 
         WeekResponse response = weekService.create(request);
@@ -104,6 +110,15 @@ class WeekServiceTest {
 
         verify(analyticsCacheInvalidationService)
                 .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        currentUser,
+                        "WEEK_CREATED",
+                        "WEEK",
+                        savedWeek.getId(),
+                        "Week created"
+                );
     }
 
     @Test
@@ -129,6 +144,7 @@ class WeekServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -170,6 +186,7 @@ class WeekServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -207,6 +224,7 @@ class WeekServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -234,6 +252,7 @@ class WeekServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -265,6 +284,7 @@ class WeekServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -291,6 +311,7 @@ class WeekServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -339,5 +360,6 @@ class WeekServiceTest {
 
         verifyNoInteractions(dashboardCacheInvalidationService);
         verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 }

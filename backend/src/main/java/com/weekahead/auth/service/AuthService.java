@@ -3,6 +3,7 @@ package com.weekahead.auth.service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.dto.LoginRequest;
 import com.weekahead.auth.dto.LoginResponse;
 import com.weekahead.auth.dto.RegisterRequest;
@@ -18,15 +19,18 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuditLogService auditLogService;
 
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService) {
+            JwtService jwtService,
+            AuditLogService auditLogService) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.auditLogService = auditLogService;
     }
 
     public RegisterResponse register(RegisterRequest request) {
@@ -46,7 +50,15 @@ public class AuthService {
                 UserStatus.ACTIVE
         );
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        auditLogService.log(
+                savedUser,
+                "REGISTER",
+                "USER",
+                savedUser.getId(),
+                "User registration successful"
+        );
 
         return new RegisterResponse("Registration successful");
     }
@@ -75,6 +87,14 @@ public class AuthService {
                         user.getId(),
                         user.getEmail()
                 );
+
+        auditLogService.log(
+                user,
+                "LOGIN",
+                "USER",
+                user.getId(),
+                "User login successful"
+        );
 
         return new LoginResponse(
                 "Login successful",
