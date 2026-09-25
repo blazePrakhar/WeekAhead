@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.weekahead.ai.dto.AIInsightResponse;
 import com.weekahead.ai.service.AIInsightService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 @RestController
 @RequestMapping("/api/weeks")
+@SecurityRequirement(name = "bearerAuth")
 public class AIInsightController {
 
     private final AIInsightService aiInsightService;

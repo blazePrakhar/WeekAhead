@@ -15,4 +15,8 @@ public interface WeeklyAllocationRepository
             Long weekId,
             Long lifeAreaId
     );
+
+    List<WeeklyAllocation> findAllByWeekIdInOrderByWeekIdAscLifeAreaIdAsc(
+            List<Long> weekIds
+    );
 }

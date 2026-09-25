@@ -1,29 +1,36 @@
 package com.weekahead.allocation.service;
 
-import com.weekahead.allocation.algorithm.AllocationEngine;
-import com.weekahead.allocation.algorithm.AllocationResult;
-import com.weekahead.allocation.entity.WeeklyAllocation;
-import com.weekahead.allocation.repository.WeeklyAllocationRepository;
-import com.weekahead.auth.entity.User;
-import com.weekahead.auth.service.CurrentUserService;
-import com.weekahead.lifearea.entity.LifeArea;
-import com.weekahead.lifearea.repository.LifeAreaRepository;
-import com.weekahead.week.entity.Week;
-import com.weekahead.week.repository.WeekRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.weekahead.allocation.algorithm.AllocationEngine;
+import com.weekahead.allocation.algorithm.AllocationResult;
+import com.weekahead.allocation.entity.WeeklyAllocation;
+import com.weekahead.allocation.repository.WeeklyAllocationRepository;
+import com.weekahead.audit.service.AuditLogService;
+import com.weekahead.auth.entity.User;
+import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
+import com.weekahead.lifearea.entity.LifeArea;
+import com.weekahead.lifearea.repository.LifeAreaRepository;
+import com.weekahead.week.entity.Week;
+import com.weekahead.week.repository.WeekRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AllocationServiceTest {
@@ -43,6 +50,15 @@ class AllocationServiceTest {
     @Mock
     private AllocationEngine allocationEngine;
 
+    @Mock
+    private DashboardCacheInvalidationService dashboardCacheInvalidationService;
+
+    @Mock
+    private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+
+    @Mock
+    private AuditLogService auditLogService;
+
     private AllocationService allocationService;
 
     private User user;
@@ -56,7 +72,10 @@ class AllocationServiceTest {
                 weekRepository,
                 lifeAreaRepository,
                 weeklyAllocationRepository,
-                allocationEngine
+                allocationEngine,
+                dashboardCacheInvalidationService,
+                analyticsCacheInvalidationService,
+                auditLogService
         );
 
         user = new User(
@@ -76,15 +95,6 @@ class AllocationServiceTest {
         );
 
         lifeArea = mock(LifeArea.class);
-    }
-
-    private void stubActiveLifeArea() {
-        when(lifeArea.getId()).thenReturn(1L);
-        when(lifeArea.getName()).thenReturn("Career");
-        when(lifeArea.getWeight()).thenReturn(1);
-        when(lifeArea.getMinMinutes()).thenReturn(60);
-        when(lifeArea.getMaxMinutes()).thenReturn(300);
-        when(lifeArea.getIsActive()).thenReturn(true);
     }
 
     @Test
@@ -135,6 +145,21 @@ class AllocationServiceTest {
 
         verify(allocationEngine)
                 .calculate(any());
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "ALLOCATION_GENERATED",
+                        "WEEK",
+                        week.getId(),
+                        "Allocation recommendation generated"
+                );
     }
 
     @Test
@@ -194,6 +219,21 @@ class AllocationServiceTest {
                 lifeArea.getId(),
                 captor.getValue().lifeAreas().get(0).lifeAreaId()
         );
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "ALLOCATION_GENERATED",
+                        "WEEK",
+                        week.getId(),
+                        "Allocation recommendation generated"
+                );
     }
 
     @Test
@@ -216,6 +256,9 @@ class AllocationServiceTest {
         verifyNoInteractions(lifeAreaRepository);
         verifyNoInteractions(allocationEngine);
         verifyNoInteractions(weeklyAllocationRepository);
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -243,6 +286,9 @@ class AllocationServiceTest {
 
         verifyNoInteractions(allocationEngine);
         verifyNoInteractions(weeklyAllocationRepository);
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -305,6 +351,21 @@ class AllocationServiceTest {
 
         verify(weeklyAllocationRepository)
                 .save(existingAllocation);
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "ALLOCATION_GENERATED",
+                        "WEEK",
+                        week.getId(),
+                        "Allocation recommendation generated"
+                );
     }
 
     @Test
@@ -341,18 +402,25 @@ class AllocationServiceTest {
                 = allocationService.getAllocations(1L);
 
         assertEquals(week, result.week());
+
         assertEquals(
                 1,
                 result.result().allocations().size()
         );
+
         assertEquals(
                 500,
                 result.result().allocations().get(0).recommendedMinutes()
         );
+
         assertEquals(
                 500,
                 result.result().totalRecommendedMinutes()
         );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -373,6 +441,9 @@ class AllocationServiceTest {
         assertEquals("Week not found", exception.getMessage());
 
         verifyNoInteractions(weeklyAllocationRepository);
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -398,5 +469,18 @@ class AllocationServiceTest {
                 "Allocation recommendation not found",
                 exception.getMessage()
         );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
+    }
+
+    private void stubActiveLifeArea() {
+        when(lifeArea.getId()).thenReturn(1L);
+        when(lifeArea.getName()).thenReturn("Career");
+        when(lifeArea.getWeight()).thenReturn(1);
+        when(lifeArea.getMinMinutes()).thenReturn(60);
+        when(lifeArea.getMaxMinutes()).thenReturn(300);
+        when(lifeArea.getIsActive()).thenReturn(true);
     }
 }

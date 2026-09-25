@@ -29,6 +29,24 @@ services:
       retries: 10
       start_period: 20s
 
+  redis:
+    image: redis:7-alpine
+    container_name: weekahead-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "ping"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
   backend:
     build:
       context: .
@@ -38,11 +56,15 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       DB_URL: jdbc:mysql://mysql:3306/weekahead_dev?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       DB_USERNAME: weekahead_app
       DB_PASSWORD: ${DB_PASSWORD}
       FLYWAY_MIGRATIONS_PATH: /app/database/migrations
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "${SERVER_PORT:-8080}:8080"
 

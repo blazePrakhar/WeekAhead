@@ -6,8 +6,11 @@ import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.week.dto.WeekRequest;
 import com.weekahead.week.dto.WeekResponse;
 import com.weekahead.week.entity.Week;
@@ -18,13 +21,22 @@ public class WeekService {
 
     private final WeekRepository weekRepository;
     private final CurrentUserService currentUserService;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
+    private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+    private final AuditLogService auditLogService;
 
     public WeekService(
             WeekRepository weekRepository,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            DashboardCacheInvalidationService dashboardCacheInvalidationService,
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService,
+            AuditLogService auditLogService
     ) {
         this.weekRepository = weekRepository;
         this.currentUserService = currentUserService;
+        this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
+        this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
+        this.auditLogService = auditLogService;
     }
 
     public WeekResponse create(WeekRequest request) {
@@ -61,6 +73,17 @@ public class WeekService {
         );
 
         Week savedWeek = weekRepository.save(week);
+
+        dashboardCacheInvalidationService.invalidate(currentUser.getId());
+        analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                currentUser,
+                "WEEK_CREATED",
+                "WEEK",
+                savedWeek.getId(),
+                "Week created"
+        );
 
         return toResponse(savedWeek);
     }

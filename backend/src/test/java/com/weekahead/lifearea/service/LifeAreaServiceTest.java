@@ -10,12 +10,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.Role;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.entity.UserStatus;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.dto.LifeAreaRequest;
 import com.weekahead.lifearea.dto.LifeAreaResponse;
 import com.weekahead.lifearea.entity.LifeArea;
@@ -29,8 +33,23 @@ class LifeAreaServiceTest {
     private final CurrentUserService currentUserService
             = mock(CurrentUserService.class);
 
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService
+            = mock(DashboardCacheInvalidationService.class);
+
+    private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService
+            = mock(AnalyticsCacheInvalidationService.class);
+
+    private final AuditLogService auditLogService
+            = mock(AuditLogService.class);
+
     private final LifeAreaService lifeAreaService
-            = new LifeAreaService(lifeAreaRepository, currentUserService);
+            = new LifeAreaService(
+                    lifeAreaRepository,
+                    currentUserService,
+                    dashboardCacheInvalidationService,
+                    analyticsCacheInvalidationService,
+                    auditLogService
+            );
 
     @Test
     void shouldCreateLifeAreaForCurrentUser() {
@@ -71,6 +90,21 @@ class LifeAreaServiceTest {
         assertEquals(true, response.isActive());
 
         verify(lifeAreaRepository).save(any(LifeArea.class));
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "LIFE_AREA_CREATED",
+                        "LIFE_AREA",
+                        lifeArea.getId(),
+                        "Life area created"
+                );
     }
 
     @Test
@@ -120,6 +154,10 @@ class LifeAreaServiceTest {
         assertEquals(600, result.get(1).maxMinutes());
 
         verify(lifeAreaRepository).findAllByUserId(user.getId());
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -166,6 +204,21 @@ class LifeAreaServiceTest {
         assertEquals(900, response.maxMinutes());
 
         verify(lifeAreaRepository).save(lifeArea);
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "LIFE_AREA_UPDATED",
+                        "LIFE_AREA",
+                        lifeArea.getId(),
+                        "Life area updated"
+                );
     }
 
     @Test
@@ -193,6 +246,10 @@ class LifeAreaServiceTest {
         );
 
         verify(lifeAreaRepository, never()).save(any());
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -222,6 +279,10 @@ class LifeAreaServiceTest {
 
         verify(lifeAreaRepository, never())
                 .findByIdAndUserId(any(), any());
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -256,6 +317,10 @@ class LifeAreaServiceTest {
                 .findByIdAndUserId(99L, currentUser.getId());
 
         verify(lifeAreaRepository, never()).save(any());
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -281,7 +346,12 @@ class LifeAreaServiceTest {
                 .findByIdAndUserId(99L, currentUser.getId());
 
         verify(lifeAreaRepository, never()).save(any());
+
         verify(lifeAreaRepository, never()).delete(any());
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -314,8 +384,26 @@ class LifeAreaServiceTest {
 
         assertEquals(false, lifeArea.getIsActive());
 
-        verify(lifeAreaRepository).findByIdAndUserId(1L, user.getId());
+        verify(lifeAreaRepository)
+                .findByIdAndUserId(1L, user.getId());
+
         verify(lifeAreaRepository).save(lifeArea);
+
         verify(lifeAreaRepository, never()).delete(any());
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "LIFE_AREA_ARCHIVED",
+                        "LIFE_AREA",
+                        lifeArea.getId(),
+                        "Life area archived"
+                );
     }
 }

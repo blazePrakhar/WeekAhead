@@ -1,5 +1,10 @@
 package com.weekahead.allocation.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.weekahead.allocation.algorithm.AllocationEngine;
 import com.weekahead.allocation.algorithm.AllocationInput;
 import com.weekahead.allocation.algorithm.AllocationResult;
@@ -7,17 +12,15 @@ import com.weekahead.allocation.algorithm.AllocationResultItem;
 import com.weekahead.allocation.algorithm.LifeAreaAllocationInput;
 import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
 import com.weekahead.week.entity.Week;
 import com.weekahead.week.repository.WeekRepository;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class AllocationService {
@@ -29,24 +32,32 @@ public class AllocationService {
     private final LifeAreaRepository lifeAreaRepository;
     private final WeeklyAllocationRepository weeklyAllocationRepository;
     private final AllocationEngine allocationEngine;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
+    private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+    private final AuditLogService auditLogService;
 
     public AllocationService(
             CurrentUserService currentUserService,
             WeekRepository weekRepository,
             LifeAreaRepository lifeAreaRepository,
             WeeklyAllocationRepository weeklyAllocationRepository,
-            AllocationEngine allocationEngine
+            AllocationEngine allocationEngine,
+            DashboardCacheInvalidationService dashboardCacheInvalidationService,
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService,
+            AuditLogService auditLogService
     ) {
         this.currentUserService = currentUserService;
         this.weekRepository = weekRepository;
         this.lifeAreaRepository = lifeAreaRepository;
         this.weeklyAllocationRepository = weeklyAllocationRepository;
         this.allocationEngine = allocationEngine;
+        this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
+        this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
+        this.auditLogService = auditLogService;
     }
 
     @Transactional
     public AllocationSnapshot generateRecommendation(Long weekId) {
-
         User user = currentUserService.getCurrentUser();
 
         Week week = weekRepository.findByIdAndUserId(weekId, user.getId())
@@ -80,7 +91,6 @@ public class AllocationService {
         AllocationResult result = allocationEngine.calculate(input);
 
         for (AllocationResultItem item : result.allocations()) {
-
             LifeArea lifeArea = activeLifeAreas.stream()
                     .filter(area -> area.getId().equals(item.lifeAreaId()))
                     .findFirst()
@@ -110,12 +120,22 @@ public class AllocationService {
             weeklyAllocationRepository.save(allocation);
         }
 
+        dashboardCacheInvalidationService.invalidate(user.getId());
+        analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                user,
+                "ALLOCATION_GENERATED",
+                "WEEK",
+                week.getId(),
+                "Allocation recommendation generated"
+        );
+
         return new AllocationSnapshot(week, result);
     }
 
     @Transactional(readOnly = true)
     public AllocationSnapshot getAllocations(Long weekId) {
-
         User user = currentUserService.getCurrentUser();
 
         Week week = weekRepository.findByIdAndUserId(weekId, user.getId())

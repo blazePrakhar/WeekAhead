@@ -11,13 +11,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.Role;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.entity.UserStatus;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.week.dto.WeekRequest;
 import com.weekahead.week.dto.WeekResponse;
 import com.weekahead.week.entity.Week;
@@ -32,6 +36,15 @@ class WeekServiceTest {
     @Mock
     private CurrentUserService currentUserService;
 
+    @Mock
+    private DashboardCacheInvalidationService dashboardCacheInvalidationService;
+
+    @Mock
+    private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+
+    @Mock
+    private AuditLogService auditLogService;
+
     private WeekService weekService;
 
     private User currentUser;
@@ -40,7 +53,10 @@ class WeekServiceTest {
     void setUp() {
         weekService = new WeekService(
                 weekRepository,
-                currentUserService
+                currentUserService,
+                dashboardCacheInvalidationService,
+                analyticsCacheInvalidationService,
+                auditLogService
         );
 
         currentUser = new User(
@@ -78,7 +94,8 @@ class WeekServiceTest {
                 startDate
         )).thenReturn(Optional.empty());
 
-        when(weekRepository.save(org.mockito.ArgumentMatchers.any(Week.class)))
+        when(weekRepository.save(
+                org.mockito.ArgumentMatchers.any(Week.class)))
                 .thenReturn(savedWeek);
 
         WeekResponse response = weekService.create(request);
@@ -87,6 +104,21 @@ class WeekServiceTest {
         assertEquals(startDate.plusDays(6), response.weekEndDate());
         assertEquals(10080, response.availableMinutes());
         assertEquals(7200, response.fixedCommitmentMinutes());
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(currentUser.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
+
+        verify(auditLogService)
+                .log(
+                        currentUser,
+                        "WEEK_CREATED",
+                        "WEEK",
+                        savedWeek.getId(),
+                        "Week created"
+                );
     }
 
     @Test
@@ -109,6 +141,10 @@ class WeekServiceTest {
                 "Fixed commitment minutes must be less than or equal to available minutes",
                 exception.getMessage()
         );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -147,6 +183,10 @@ class WeekServiceTest {
                 "A week already exists for the given start date",
                 exception.getMessage()
         );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -181,6 +221,10 @@ class WeekServiceTest {
         assertEquals(endDate, response.weekEndDate());
         assertEquals(10080, response.availableMinutes());
         assertEquals(7200, response.fixedCommitmentMinutes());
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -205,6 +249,10 @@ class WeekServiceTest {
                 "Current week not found",
                 exception.getMessage()
         );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -233,6 +281,10 @@ class WeekServiceTest {
 
         assertEquals(startDate, response.weekStartDate());
         assertEquals(startDate.plusDays(6), response.weekEndDate());
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -256,6 +308,10 @@ class WeekServiceTest {
                 "Week not found",
                 exception.getMessage()
         );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -301,5 +357,9 @@ class WeekServiceTest {
                         org.mockito.ArgumentMatchers.eq(LocalDate.now()),
                         org.mockito.ArgumentMatchers.any()
                 );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
+        verifyNoInteractions(auditLogService);
     }
 }

@@ -16,10 +16,12 @@ import com.weekahead.lifearea.dto.LifeAreaRequest;
 import com.weekahead.lifearea.dto.LifeAreaResponse;
 import com.weekahead.lifearea.service.LifeAreaService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/life-areas")
+@SecurityRequirement(name = "bearerAuth")
 public class LifeAreaController {
 
     private final LifeAreaService lifeAreaService;

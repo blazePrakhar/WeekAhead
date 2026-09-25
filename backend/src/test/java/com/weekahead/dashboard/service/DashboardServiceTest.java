@@ -21,12 +21,19 @@ import com.weekahead.auth.entity.User;
 import com.weekahead.auth.entity.UserStatus;
 import com.weekahead.auth.service.CurrentUserService;
 import com.weekahead.lifearea.entity.LifeArea;
+import com.weekahead.neglect.model.NeglectAssessment;
+import com.weekahead.neglect.model.NeglectLevel;
+import com.weekahead.neglect.service.NeglectService;
+import com.weekahead.rebalancing.service.RebalancingService;
 import com.weekahead.timetracking.repository.TimeLogRepository;
 import com.weekahead.week.entity.Week;
 import com.weekahead.week.repository.WeekRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DashboardServiceTest {
+
+    @Mock
+    private RebalancingService rebalancingService;
 
     @Mock
     private WeekRepository weekRepository;
@@ -40,6 +47,9 @@ class DashboardServiceTest {
     @Mock
     private CurrentUserService currentUserService;
 
+    @Mock
+    private NeglectService neglectService;
+
     private DashboardService dashboardService;
 
     private User currentUser;
@@ -50,7 +60,9 @@ class DashboardServiceTest {
                 weekRepository,
                 weeklyAllocationRepository,
                 timeLogRepository,
-                currentUserService
+                currentUserService,
+                neglectService,
+                rebalancingService
         );
 
         currentUser = new User(
@@ -98,6 +110,8 @@ class DashboardServiceTest {
     private void mockCurrentWeek(Week week) {
         when(currentUserService.getCurrentUser())
                 .thenReturn(currentUser);
+        when(rebalancingService.calculate())
+                .thenReturn(List.of());
 
         when(weekRepository
                 .findByUserIdAndWeekStartDateLessThanEqualAndWeekEndDateGreaterThanEqual(
@@ -106,10 +120,84 @@ class DashboardServiceTest {
                         LocalDate.now()
                 ))
                 .thenReturn(Optional.of(week));
+
+        when(neglectService.calculate())
+                .thenReturn(List.of());
     }
 
     @Test
     void shouldBuildWeeklyDashboard() {
+        LocalDate startDate = getCurrentWeekStartDate();
+        LocalDate endDate = startDate.plusDays(6);
+
+        Week week = createCurrentWeek(
+                startDate,
+                endDate,
+                10080,
+                7200
+        );
+
+        LifeArea programming = mockLifeArea(
+                1L,
+                "Programming"
+        );
+
+        WeeklyAllocation allocation = new WeeklyAllocation(
+                week,
+                programming,
+                300,
+                240,
+                0,
+                "v1",
+                "Test allocation"
+        );
+
+        mockCurrentWeek(week);
+
+        when(weeklyAllocationRepository
+                .findAllByWeekIdOrderByLifeAreaIdAsc(week.getId()))
+                .thenReturn(List.of(allocation));
+
+        when(timeLogRepository.sumDurationByLifeArea(
+                currentUser.getId(),
+                startDate,
+                endDate
+        )).thenReturn(List.<Object[]>of(
+                new Object[]{1L, 240L}
+        ));
+
+        var response = dashboardService.getWeeklyDashboard();
+
+        assertEquals(week.getId(), response.weekId());
+        assertEquals(startDate, response.weekStartDate());
+        assertEquals(endDate, response.weekEndDate());
+
+        assertEquals(10080, response.availableMinutes());
+        assertEquals(7200, response.fixedCommitmentMinutes());
+        assertEquals(2880, response.discretionaryMinutes());
+
+        assertEquals(300, response.totalRecommendedMinutes());
+        assertEquals(240, response.totalPlannedMinutes());
+        assertEquals(240, response.totalActualMinutes());
+
+        assertEquals(60, response.totalDeficitMinutes());
+        assertEquals(0, response.totalOverflowMinutes());
+
+        assertEquals(1, response.lifeAreas().size());
+
+        var lifeArea = response.lifeAreas().get(0);
+
+        assertEquals("Programming", lifeArea.lifeAreaName());
+        assertEquals(300, lifeArea.recommendedMinutes());
+        assertEquals(240, lifeArea.plannedMinutes());
+        assertEquals(240, lifeArea.actualMinutes());
+        assertEquals(60, lifeArea.deficitMinutes());
+        assertEquals(0, lifeArea.overflowMinutes());
+        assertEquals(false, lifeArea.neglected());
+    }
+
+    @Test
+    void shouldMarkLifeAreaAsNeglected() {
         LocalDate startDate = getCurrentWeekStartDate();
         LocalDate endDate = startDate.plusDays(6);
 
@@ -146,34 +234,81 @@ class DashboardServiceTest {
                 startDate,
                 endDate
         )).thenReturn(List.<Object[]>of(
-                new Object[]{1L, 240L}
+                new Object[]{1L, 100L}
         ));
+
+        when(neglectService.calculate())
+                .thenReturn(List.of(
+                        new NeglectAssessment(
+                                1L,
+                                100.0 / 300.0,
+                                2,
+                                NeglectLevel.WARNING
+                        )
+                ));
 
         var response = dashboardService.getWeeklyDashboard();
 
-        assertEquals(week.getId(), response.weekId());
-        assertEquals(startDate, response.weekStartDate());
-        assertEquals(endDate, response.weekEndDate());
+        var lifeArea = response.lifeAreas().get(0);
 
-        assertEquals(10080, response.availableMinutes());
-        assertEquals(7200, response.fixedCommitmentMinutes());
-        assertEquals(2880, response.discretionaryMinutes());
+        assertEquals(true, lifeArea.neglected());
+    }
 
-        assertEquals(300, response.totalRecommendedMinutes());
-        assertEquals(240, response.totalActualMinutes());
+    @Test
+    void shouldNotMarkNormalLifeAreaAsNeglected() {
+        LocalDate startDate = getCurrentWeekStartDate();
+        LocalDate endDate = startDate.plusDays(6);
 
-        assertEquals(60, response.totalDeficitMinutes());
-        assertEquals(0, response.totalOverflowMinutes());
+        Week week = createCurrentWeek(
+                startDate,
+                endDate,
+                10080,
+                7200
+        );
 
-        assertEquals(1, response.lifeAreas().size());
+        LifeArea programming = mockLifeArea(
+                1L,
+                "Programming"
+        );
+
+        WeeklyAllocation allocation = new WeeklyAllocation(
+                week,
+                programming,
+                300,
+                300,
+                0,
+                "v1",
+                "Test allocation"
+        );
+
+        mockCurrentWeek(week);
+
+        when(weeklyAllocationRepository
+                .findAllByWeekIdOrderByLifeAreaIdAsc(week.getId()))
+                .thenReturn(List.of(allocation));
+
+        when(timeLogRepository.sumDurationByLifeArea(
+                currentUser.getId(),
+                startDate,
+                endDate
+        )).thenReturn(List.<Object[]>of(
+                new Object[]{1L, 300L}
+        ));
+
+        when(neglectService.calculate())
+                .thenReturn(List.of(
+                        new NeglectAssessment(
+                                1L,
+                                1.0,
+                                0,
+                                NeglectLevel.NORMAL
+                        )
+                ));
+
+        var response = dashboardService.getWeeklyDashboard();
 
         var lifeArea = response.lifeAreas().get(0);
 
-        assertEquals("Programming", lifeArea.lifeAreaName());
-        assertEquals(300, lifeArea.recommendedMinutes());
-        assertEquals(240, lifeArea.actualMinutes());
-        assertEquals(60, lifeArea.deficitMinutes());
-        assertEquals(0, lifeArea.overflowMinutes());
         assertEquals(false, lifeArea.neglected());
     }
 
@@ -309,7 +444,7 @@ class DashboardServiceTest {
                 week,
                 programming,
                 300,
-                300,
+                240,
                 0,
                 "v1",
                 "Programming allocation"
@@ -319,7 +454,7 @@ class DashboardServiceTest {
                 week,
                 football,
                 240,
-                240,
+                300,
                 0,
                 "v1",
                 "Football allocation"
@@ -348,6 +483,7 @@ class DashboardServiceTest {
         assertEquals(2, response.lifeAreas().size());
 
         assertEquals(540, response.totalRecommendedMinutes());
+        assertEquals(540, response.totalPlannedMinutes());
         assertEquals(540, response.totalActualMinutes());
 
         assertEquals(60, response.totalDeficitMinutes());
@@ -400,11 +536,13 @@ class DashboardServiceTest {
         var lifeArea = response.lifeAreas().get(0);
 
         assertEquals(0, lifeArea.recommendedMinutes());
+        assertEquals(0, lifeArea.plannedMinutes());
         assertEquals(60, lifeArea.actualMinutes());
         assertEquals(0, lifeArea.deficitMinutes());
         assertEquals(60, lifeArea.overflowMinutes());
 
         assertEquals(0, response.totalRecommendedMinutes());
+        assertEquals(0, response.totalPlannedMinutes());
         assertEquals(60, response.totalActualMinutes());
         assertEquals(0, response.totalDeficitMinutes());
         assertEquals(60, response.totalOverflowMinutes());
@@ -456,11 +594,13 @@ class DashboardServiceTest {
         var lifeArea = response.lifeAreas().get(0);
 
         assertEquals(300, lifeArea.recommendedMinutes());
+        assertEquals(300, lifeArea.plannedMinutes());
         assertEquals(300, lifeArea.actualMinutes());
         assertEquals(0, lifeArea.deficitMinutes());
         assertEquals(0, lifeArea.overflowMinutes());
 
         assertEquals(300, response.totalRecommendedMinutes());
+        assertEquals(300, response.totalPlannedMinutes());
         assertEquals(300, response.totalActualMinutes());
         assertEquals(0, response.totalDeficitMinutes());
         assertEquals(0, response.totalOverflowMinutes());

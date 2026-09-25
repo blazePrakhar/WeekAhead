@@ -4,8 +4,11 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.dto.LifeAreaRequest;
 import com.weekahead.lifearea.dto.LifeAreaResponse;
 import com.weekahead.lifearea.entity.LifeArea;
@@ -16,13 +19,22 @@ public class LifeAreaService {
 
     private final LifeAreaRepository lifeAreaRepository;
     private final CurrentUserService currentUserService;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
+    private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+    private final AuditLogService auditLogService;
 
     public LifeAreaService(
             LifeAreaRepository lifeAreaRepository,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            DashboardCacheInvalidationService dashboardCacheInvalidationService,
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService,
+            AuditLogService auditLogService
     ) {
         this.lifeAreaRepository = lifeAreaRepository;
         this.currentUserService = currentUserService;
+        this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
+        this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
+        this.auditLogService = auditLogService;
     }
 
     public LifeAreaResponse create(LifeAreaRequest request) {
@@ -44,6 +56,17 @@ public class LifeAreaService {
         );
 
         LifeArea savedLifeArea = lifeAreaRepository.save(lifeArea);
+
+        dashboardCacheInvalidationService.invalidate(currentUser.getId());
+        analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                currentUser,
+                "LIFE_AREA_CREATED",
+                "LIFE_AREA",
+                savedLifeArea.getId(),
+                "Life area created"
+        );
 
         return toResponse(savedLifeArea);
     }
@@ -78,6 +101,17 @@ public class LifeAreaService {
 
         LifeArea updatedLifeArea = lifeAreaRepository.save(lifeArea);
 
+        dashboardCacheInvalidationService.invalidate(currentUser.getId());
+        analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                currentUser,
+                "LIFE_AREA_UPDATED",
+                "LIFE_AREA",
+                updatedLifeArea.getId(),
+                "Life area updated"
+        );
+
         return toResponse(updatedLifeArea);
     }
 
@@ -90,6 +124,17 @@ public class LifeAreaService {
 
         lifeArea.setIsActive(false);
         lifeAreaRepository.save(lifeArea);
+
+        dashboardCacheInvalidationService.invalidate(currentUser.getId());
+        analyticsCacheInvalidationService.invalidate();
+
+        auditLogService.log(
+                currentUser,
+                "LIFE_AREA_ARCHIVED",
+                "LIFE_AREA",
+                lifeArea.getId(),
+                "Life area archived"
+        );
     }
 
     private LifeAreaResponse toResponse(LifeArea lifeArea) {

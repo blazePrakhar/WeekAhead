@@ -1,7 +1,28 @@
 package com.weekahead.timetracking.service;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.weekahead.audit.service.AuditLogService;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
 import com.weekahead.timetracking.dto.CreateTimeLogRequest;
@@ -9,19 +30,6 @@ import com.weekahead.timetracking.dto.TimeLogResponse;
 import com.weekahead.timetracking.dto.UpdateTimeLogRequest;
 import com.weekahead.timetracking.entity.TimeLog;
 import com.weekahead.timetracking.repository.TimeLogRepository;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TimeLogServiceTest {
@@ -34,6 +42,15 @@ class TimeLogServiceTest {
 
     @Mock
     private CurrentUserService currentUserService;
+
+    @Mock
+    private DashboardCacheInvalidationService dashboardCacheInvalidationService;
+
+    @Mock
+    private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+
+    @Mock
+    private AuditLogService auditLogService;
 
     @Mock
     private User user;
@@ -61,7 +78,7 @@ class TimeLogServiceTest {
                 "MANUAL"
         );
 
-        TimeLog savedTimeLog = mock(TimeLog.class);
+        TimeLog savedTimeLog = org.mockito.Mockito.mock(TimeLog.class);
 
         when(savedTimeLog.getId()).thenReturn(1L);
         when(savedTimeLog.getLifeArea()).thenReturn(lifeArea);
@@ -85,6 +102,15 @@ class TimeLogServiceTest {
         assertEquals("MANUAL", response.source());
 
         verify(timeLogRepository).save(any(TimeLog.class));
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "TIME_LOG_CREATED",
+                        "TIME_LOG",
+                        1L,
+                        "Time log created"
+                );
     }
 
     @Test
@@ -110,6 +136,7 @@ class TimeLogServiceTest {
         assertEquals("Life area not found", exception.getMessage());
 
         verify(timeLogRepository, never()).save(any());
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -119,14 +146,10 @@ class TimeLogServiceTest {
         when(lifeArea.getName()).thenReturn("Work");
         when(currentUserService.getCurrentUser()).thenReturn(user);
 
-        TimeLog timeLog = new TimeLog(
-                user,
-                lifeArea,
-                LocalDate.of(2026, 9, 20),
-                60,
-                "Old note",
-                "MANUAL"
-        );
+        TimeLog timeLog = org.mockito.Mockito.mock(TimeLog.class);
+
+        when(timeLog.getId()).thenReturn(1L);
+        when(timeLog.getLifeArea()).thenReturn(lifeArea);
 
         when(timeLogRepository.findByIdAndUserId(1L, 1L))
                 .thenReturn(Optional.of(timeLog));
@@ -145,8 +168,14 @@ class TimeLogServiceTest {
                 "MANUAL"
         );
 
+        when(timeLog.getLogDate()).thenReturn(request.logDate());
+        when(timeLog.getDurationMinutes()).thenReturn(request.durationMinutes());
+        when(timeLog.getNote()).thenReturn(request.note());
+        when(timeLog.getSource()).thenReturn(request.source());
+
         TimeLogResponse response = timeLogService.update(1L, request);
 
+        assertEquals(1L, response.id());
         assertEquals(1L, response.lifeAreaId());
         assertEquals("Work", response.lifeAreaName());
         assertEquals(LocalDate.of(2026, 9, 21), response.logDate());
@@ -155,6 +184,15 @@ class TimeLogServiceTest {
         assertEquals("MANUAL", response.source());
 
         verify(timeLogRepository).save(timeLog);
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "TIME_LOG_UPDATED",
+                        "TIME_LOG",
+                        1L,
+                        "Time log updated"
+                );
     }
 
     @Test
@@ -180,6 +218,7 @@ class TimeLogServiceTest {
         assertEquals("Time log not found", exception.getMessage());
 
         verify(timeLogRepository, never()).save(any());
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -187,7 +226,9 @@ class TimeLogServiceTest {
         when(user.getId()).thenReturn(1L);
         when(currentUserService.getCurrentUser()).thenReturn(user);
 
-        TimeLog timeLog = mock(TimeLog.class);
+        TimeLog timeLog = org.mockito.Mockito.mock(TimeLog.class);
+
+        when(timeLog.getId()).thenReturn(1L);
 
         when(timeLogRepository.findByIdAndUserId(1L, 1L))
                 .thenReturn(Optional.of(timeLog));
@@ -195,6 +236,15 @@ class TimeLogServiceTest {
         timeLogService.delete(1L);
 
         verify(timeLogRepository).delete(timeLog);
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "TIME_LOG_DELETED",
+                        "TIME_LOG",
+                        1L,
+                        "Time log deleted"
+                );
     }
 
     @Test
@@ -212,6 +262,7 @@ class TimeLogServiceTest {
         assertEquals("Time log not found", exception.getMessage());
 
         verify(timeLogRepository, never()).delete(any());
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -219,8 +270,8 @@ class TimeLogServiceTest {
         when(user.getId()).thenReturn(1L);
         when(currentUserService.getCurrentUser()).thenReturn(user);
 
-        TimeLog first = mock(TimeLog.class);
-        TimeLog second = mock(TimeLog.class);
+        TimeLog first = org.mockito.Mockito.mock(TimeLog.class);
+        TimeLog second = org.mockito.Mockito.mock(TimeLog.class);
 
         when(first.getLifeArea()).thenReturn(lifeArea);
         when(first.getDurationMinutes()).thenReturn(90);
@@ -245,6 +296,8 @@ class TimeLogServiceTest {
         assertEquals(2, responses.size());
         assertEquals(90, responses.get(0).durationMinutes());
         assertEquals(60, responses.get(1).durationMinutes());
+
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -257,7 +310,7 @@ class TimeLogServiceTest {
         when(lifeAreaRepository.findByIdAndUserId(1L, 1L))
                 .thenReturn(Optional.of(lifeArea));
 
-        TimeLog timeLog = mock(TimeLog.class);
+        TimeLog timeLog = org.mockito.Mockito.mock(TimeLog.class);
 
         when(timeLog.getId()).thenReturn(1L);
         when(timeLog.getLifeArea()).thenReturn(lifeArea);
@@ -285,6 +338,7 @@ class TimeLogServiceTest {
         assertEquals(90, responses.get(0).durationMinutes());
 
         verify(lifeAreaRepository).findByIdAndUserId(1L, 1L);
+        verifyNoInteractions(auditLogService);
     }
 
     @Test
@@ -298,8 +352,12 @@ class TimeLogServiceTest {
                 )
         );
 
-        assertEquals("From date cannot be after to date", exception.getMessage());
+        assertEquals(
+                "From date cannot be after to date",
+                exception.getMessage()
+        );
 
         verifyNoInteractions(timeLogRepository);
+        verifyNoInteractions(auditLogService);
     }
 }

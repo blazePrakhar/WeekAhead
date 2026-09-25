@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.weekahead.neglect.model.NeglectAssessment;
 import com.weekahead.neglect.service.NeglectService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 @RestController
 @RequestMapping("/api/neglect")
+@SecurityRequirement(name = "bearerAuth")
 public class NeglectController {
 
     private final NeglectService neglectService;
