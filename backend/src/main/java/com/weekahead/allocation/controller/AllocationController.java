@@ -3,6 +3,7 @@ package com.weekahead.allocation.controller;
 import com.weekahead.allocation.dto.AllocationResponse;
 import com.weekahead.allocation.service.AllocationService;
 import com.weekahead.allocation.service.AllocationSnapshot;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/weeks")
+@SecurityRequirement(name = "bearerAuth")
 public class AllocationController {
 
     private final AllocationService allocationService;

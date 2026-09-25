@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.weekahead.analytics.dto.AnalyticsResponse;
 import com.weekahead.analytics.service.AnalyticsService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 @RestController
 @RequestMapping("/api/analytics")
+@SecurityRequirement(name = "bearerAuth")
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;

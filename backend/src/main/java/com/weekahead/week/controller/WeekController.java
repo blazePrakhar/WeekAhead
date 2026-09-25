@@ -12,10 +12,12 @@ import com.weekahead.week.dto.WeekRequest;
 import com.weekahead.week.dto.WeekResponse;
 import com.weekahead.week.service.WeekService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/weeks")
+@SecurityRequirement(name = "bearerAuth")
 public class WeekController {
 
     private final WeekService weekService;

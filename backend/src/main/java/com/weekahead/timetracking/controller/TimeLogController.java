@@ -5,6 +5,7 @@ import com.weekahead.timetracking.dto.TimeLogResponse;
 import com.weekahead.timetracking.dto.UpdateTimeLogRequest;
 import com.weekahead.timetracking.service.TimeLogService;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/time-logs")
+@SecurityRequirement(name = "bearerAuth")
 public class TimeLogController {
 
     private final TimeLogService timeLogService;
