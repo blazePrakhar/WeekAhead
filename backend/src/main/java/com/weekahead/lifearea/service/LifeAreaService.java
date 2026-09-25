@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
 import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.dto.LifeAreaRequest;
 import com.weekahead.lifearea.dto.LifeAreaResponse;
@@ -18,15 +19,18 @@ public class LifeAreaService {
     private final LifeAreaRepository lifeAreaRepository;
     private final CurrentUserService currentUserService;
     private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
+    private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
 
     public LifeAreaService(
             LifeAreaRepository lifeAreaRepository,
             CurrentUserService currentUserService,
-            DashboardCacheInvalidationService dashboardCacheInvalidationService
+            DashboardCacheInvalidationService dashboardCacheInvalidationService,
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService
     ) {
         this.lifeAreaRepository = lifeAreaRepository;
         this.currentUserService = currentUserService;
         this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
+        this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
     }
 
     public LifeAreaResponse create(LifeAreaRequest request) {
@@ -50,6 +54,7 @@ public class LifeAreaService {
         LifeArea savedLifeArea = lifeAreaRepository.save(lifeArea);
 
         dashboardCacheInvalidationService.invalidate(currentUser.getId());
+        analyticsCacheInvalidationService.invalidate();
 
         return toResponse(savedLifeArea);
     }
@@ -85,6 +90,7 @@ public class LifeAreaService {
         LifeArea updatedLifeArea = lifeAreaRepository.save(lifeArea);
 
         dashboardCacheInvalidationService.invalidate(currentUser.getId());
+        analyticsCacheInvalidationService.invalidate();
 
         return toResponse(updatedLifeArea);
     }
@@ -100,6 +106,7 @@ public class LifeAreaService {
         lifeAreaRepository.save(lifeArea);
 
         dashboardCacheInvalidationService.invalidate(currentUser.getId());
+        analyticsCacheInvalidationService.invalidate();
     }
 
     private LifeAreaResponse toResponse(LifeArea lifeArea) {

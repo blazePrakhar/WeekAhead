@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
 import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.week.dto.WeekRequest;
 import com.weekahead.week.dto.WeekResponse;
@@ -20,15 +21,18 @@ public class WeekService {
     private final WeekRepository weekRepository;
     private final CurrentUserService currentUserService;
     private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
+    private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
 
     public WeekService(
             WeekRepository weekRepository,
             CurrentUserService currentUserService,
-            DashboardCacheInvalidationService dashboardCacheInvalidationService
+            DashboardCacheInvalidationService dashboardCacheInvalidationService,
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService
     ) {
         this.weekRepository = weekRepository;
         this.currentUserService = currentUserService;
         this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
+        this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
     }
 
     public WeekResponse create(WeekRequest request) {
@@ -67,6 +71,7 @@ public class WeekService {
         Week savedWeek = weekRepository.save(week);
 
         dashboardCacheInvalidationService.invalidate(currentUser.getId());
+        analyticsCacheInvalidationService.invalidate();
 
         return toResponse(savedWeek);
     }

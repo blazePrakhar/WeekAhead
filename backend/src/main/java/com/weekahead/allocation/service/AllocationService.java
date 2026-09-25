@@ -14,6 +14,7 @@ import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
 import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
@@ -31,6 +32,7 @@ public class AllocationService {
     private final WeeklyAllocationRepository weeklyAllocationRepository;
     private final AllocationEngine allocationEngine;
     private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
+    private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
 
     public AllocationService(
             CurrentUserService currentUserService,
@@ -38,7 +40,8 @@ public class AllocationService {
             LifeAreaRepository lifeAreaRepository,
             WeeklyAllocationRepository weeklyAllocationRepository,
             AllocationEngine allocationEngine,
-            DashboardCacheInvalidationService dashboardCacheInvalidationService
+            DashboardCacheInvalidationService dashboardCacheInvalidationService,
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService
     ) {
         this.currentUserService = currentUserService;
         this.weekRepository = weekRepository;
@@ -46,6 +49,7 @@ public class AllocationService {
         this.weeklyAllocationRepository = weeklyAllocationRepository;
         this.allocationEngine = allocationEngine;
         this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
+        this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
     }
 
     @Transactional
@@ -115,6 +119,7 @@ public class AllocationService {
         }
 
         dashboardCacheInvalidationService.invalidate(user.getId());
+        analyticsCacheInvalidationService.invalidate();
 
         return new AllocationSnapshot(week, result);
     }

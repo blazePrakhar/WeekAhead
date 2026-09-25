@@ -1,5 +1,16 @@
 package com.weekahead.analytics.service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+
 import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
 import com.weekahead.analytics.dto.AnalyticsResponse;
@@ -14,14 +25,6 @@ import com.weekahead.timetracking.entity.TimeLog;
 import com.weekahead.timetracking.repository.TimeLogRepository;
 import com.weekahead.week.entity.Week;
 import com.weekahead.week.repository.WeekRepository;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
 
 @Service
 public class AnalyticsService {
@@ -50,6 +53,10 @@ public class AnalyticsService {
         return getAnalytics(DEFAULT_WEEKS);
     }
 
+    @Cacheable(
+            value = "analytics",
+            keyGenerator = "analyticsCacheKeyGenerator"
+    )
     public AnalyticsResponse getAnalytics(int weeks) {
         if (weeks <= 0) {
             throw new IllegalArgumentException("Weeks must be greater than zero");

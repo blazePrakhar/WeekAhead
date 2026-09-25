@@ -1,7 +1,14 @@
 package com.weekahead.timetracking.service;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
 import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
@@ -10,11 +17,6 @@ import com.weekahead.timetracking.dto.TimeLogResponse;
 import com.weekahead.timetracking.dto.UpdateTimeLogRequest;
 import com.weekahead.timetracking.entity.TimeLog;
 import com.weekahead.timetracking.repository.TimeLogRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @Transactional
@@ -24,17 +26,20 @@ public class TimeLogService {
     private final LifeAreaRepository lifeAreaRepository;
     private final CurrentUserService currentUserService;
     private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
+    private final AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
 
     public TimeLogService(
             TimeLogRepository timeLogRepository,
             LifeAreaRepository lifeAreaRepository,
             CurrentUserService currentUserService,
-            DashboardCacheInvalidationService dashboardCacheInvalidationService
+            DashboardCacheInvalidationService dashboardCacheInvalidationService,
+            AnalyticsCacheInvalidationService analyticsCacheInvalidationService
     ) {
         this.timeLogRepository = timeLogRepository;
         this.lifeAreaRepository = lifeAreaRepository;
         this.currentUserService = currentUserService;
         this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
+        this.analyticsCacheInvalidationService = analyticsCacheInvalidationService;
     }
 
     public TimeLogResponse create(CreateTimeLogRequest request) {
@@ -54,6 +59,7 @@ public class TimeLogService {
         TimeLog savedTimeLog = timeLogRepository.save(timeLog);
 
         dashboardCacheInvalidationService.invalidate(user.getId());
+        analyticsCacheInvalidationService.invalidate();
 
         return toResponse(savedTimeLog);
     }
@@ -77,6 +83,7 @@ public class TimeLogService {
         TimeLog updatedTimeLog = timeLogRepository.save(timeLog);
 
         dashboardCacheInvalidationService.invalidate(user.getId());
+        analyticsCacheInvalidationService.invalidate();
 
         return toResponse(updatedTimeLog);
     }
@@ -90,6 +97,7 @@ public class TimeLogService {
         timeLogRepository.delete(timeLog);
 
         dashboardCacheInvalidationService.invalidate(user.getId());
+        analyticsCacheInvalidationService.invalidate();
     }
 
     @Transactional(readOnly = true)

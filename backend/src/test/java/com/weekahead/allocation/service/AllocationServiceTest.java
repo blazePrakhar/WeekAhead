@@ -24,6 +24,7 @@ import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
 import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
@@ -51,6 +52,9 @@ class AllocationServiceTest {
     @Mock
     private DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
+    @Mock
+    private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+
     private AllocationService allocationService;
 
     private User user;
@@ -65,7 +69,8 @@ class AllocationServiceTest {
                 lifeAreaRepository,
                 weeklyAllocationRepository,
                 allocationEngine,
-                dashboardCacheInvalidationService
+                dashboardCacheInvalidationService,
+                analyticsCacheInvalidationService
         );
 
         user = new User(
@@ -147,6 +152,9 @@ class AllocationServiceTest {
 
         verify(dashboardCacheInvalidationService)
                 .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
     }
 
     @Test
@@ -209,6 +217,9 @@ class AllocationServiceTest {
 
         verify(dashboardCacheInvalidationService)
                 .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
     }
 
     @Test
@@ -232,6 +243,7 @@ class AllocationServiceTest {
         verifyNoInteractions(allocationEngine);
         verifyNoInteractions(weeklyAllocationRepository);
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -260,6 +272,7 @@ class AllocationServiceTest {
         verifyNoInteractions(allocationEngine);
         verifyNoInteractions(weeklyAllocationRepository);
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -325,6 +338,9 @@ class AllocationServiceTest {
 
         verify(dashboardCacheInvalidationService)
                 .invalidate(user.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
     }
 
     @Test
@@ -375,6 +391,7 @@ class AllocationServiceTest {
         );
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -396,6 +413,7 @@ class AllocationServiceTest {
 
         verifyNoInteractions(weeklyAllocationRepository);
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -423,5 +441,6 @@ class AllocationServiceTest {
         );
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 }

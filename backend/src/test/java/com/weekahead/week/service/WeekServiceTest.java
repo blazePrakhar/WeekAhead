@@ -19,6 +19,7 @@ import com.weekahead.auth.entity.Role;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.entity.UserStatus;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
 import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.week.dto.WeekRequest;
 import com.weekahead.week.dto.WeekResponse;
@@ -37,6 +38,9 @@ class WeekServiceTest {
     @Mock
     private DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
+    @Mock
+    private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+
     private WeekService weekService;
 
     private User currentUser;
@@ -46,7 +50,8 @@ class WeekServiceTest {
         weekService = new WeekService(
                 weekRepository,
                 currentUserService,
-                dashboardCacheInvalidationService
+                dashboardCacheInvalidationService,
+                analyticsCacheInvalidationService
         );
 
         currentUser = new User(
@@ -96,6 +101,9 @@ class WeekServiceTest {
 
         verify(dashboardCacheInvalidationService)
                 .invalidate(currentUser.getId());
+
+        verify(analyticsCacheInvalidationService)
+                .invalidate();
     }
 
     @Test
@@ -120,6 +128,7 @@ class WeekServiceTest {
         );
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -160,6 +169,7 @@ class WeekServiceTest {
         );
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -196,6 +206,7 @@ class WeekServiceTest {
         assertEquals(7200, response.fixedCommitmentMinutes());
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -222,6 +233,7 @@ class WeekServiceTest {
         );
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -252,6 +264,7 @@ class WeekServiceTest {
         assertEquals(startDate.plusDays(6), response.weekEndDate());
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -277,6 +290,7 @@ class WeekServiceTest {
         );
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 
     @Test
@@ -324,5 +338,6 @@ class WeekServiceTest {
                 );
 
         verifyNoInteractions(dashboardCacheInvalidationService);
+        verifyNoInteractions(analyticsCacheInvalidationService);
     }
 }

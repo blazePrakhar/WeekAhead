@@ -1,7 +1,28 @@
 package com.weekahead.timetracking.service;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
 import com.weekahead.timetracking.dto.CreateTimeLogRequest;
@@ -9,19 +30,6 @@ import com.weekahead.timetracking.dto.TimeLogResponse;
 import com.weekahead.timetracking.dto.UpdateTimeLogRequest;
 import com.weekahead.timetracking.entity.TimeLog;
 import com.weekahead.timetracking.repository.TimeLogRepository;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class TimeLogServiceTest {
@@ -34,6 +42,12 @@ class TimeLogServiceTest {
 
     @Mock
     private CurrentUserService currentUserService;
+
+    @Mock
+    private DashboardCacheInvalidationService dashboardCacheInvalidationService;
+
+    @Mock
+    private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
 
     @Mock
     private User user;
