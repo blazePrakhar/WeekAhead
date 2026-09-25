@@ -2,6 +2,7 @@ package com.weekahead.timetracking.service;
 
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
 import com.weekahead.timetracking.dto.CreateTimeLogRequest;
@@ -22,15 +23,18 @@ public class TimeLogService {
     private final TimeLogRepository timeLogRepository;
     private final LifeAreaRepository lifeAreaRepository;
     private final CurrentUserService currentUserService;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
     public TimeLogService(
             TimeLogRepository timeLogRepository,
             LifeAreaRepository lifeAreaRepository,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            DashboardCacheInvalidationService dashboardCacheInvalidationService
     ) {
         this.timeLogRepository = timeLogRepository;
         this.lifeAreaRepository = lifeAreaRepository;
         this.currentUserService = currentUserService;
+        this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
     }
 
     public TimeLogResponse create(CreateTimeLogRequest request) {
@@ -47,7 +51,11 @@ public class TimeLogService {
                 request.source()
         );
 
-        return toResponse(timeLogRepository.save(timeLog));
+        TimeLog savedTimeLog = timeLogRepository.save(timeLog);
+
+        dashboardCacheInvalidationService.invalidate(user.getId());
+
+        return toResponse(savedTimeLog);
     }
 
     public TimeLogResponse update(Long id, UpdateTimeLogRequest request) {
@@ -66,7 +74,11 @@ public class TimeLogService {
                 request.source()
         );
 
-        return toResponse(timeLogRepository.save(timeLog));
+        TimeLog updatedTimeLog = timeLogRepository.save(timeLog);
+
+        dashboardCacheInvalidationService.invalidate(user.getId());
+
+        return toResponse(updatedTimeLog);
     }
 
     public void delete(Long id) {
@@ -76,6 +88,8 @@ public class TimeLogService {
                 .orElseThrow(() -> new IllegalArgumentException("Time log not found"));
 
         timeLogRepository.delete(timeLog);
+
+        dashboardCacheInvalidationService.invalidate(user.getId());
     }
 
     @Transactional(readOnly = true)

@@ -1,5 +1,10 @@
 package com.weekahead.allocation.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.weekahead.allocation.algorithm.AllocationEngine;
 import com.weekahead.allocation.algorithm.AllocationInput;
 import com.weekahead.allocation.algorithm.AllocationResult;
@@ -9,15 +14,11 @@ import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
 import com.weekahead.week.entity.Week;
 import com.weekahead.week.repository.WeekRepository;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 public class AllocationService {
@@ -29,19 +30,22 @@ public class AllocationService {
     private final LifeAreaRepository lifeAreaRepository;
     private final WeeklyAllocationRepository weeklyAllocationRepository;
     private final AllocationEngine allocationEngine;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
     public AllocationService(
             CurrentUserService currentUserService,
             WeekRepository weekRepository,
             LifeAreaRepository lifeAreaRepository,
             WeeklyAllocationRepository weeklyAllocationRepository,
-            AllocationEngine allocationEngine
+            AllocationEngine allocationEngine,
+            DashboardCacheInvalidationService dashboardCacheInvalidationService
     ) {
         this.currentUserService = currentUserService;
         this.weekRepository = weekRepository;
         this.lifeAreaRepository = lifeAreaRepository;
         this.weeklyAllocationRepository = weeklyAllocationRepository;
         this.allocationEngine = allocationEngine;
+        this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
     }
 
     @Transactional
@@ -109,6 +113,8 @@ public class AllocationService {
 
             weeklyAllocationRepository.save(allocation);
         }
+
+        dashboardCacheInvalidationService.invalidate(user.getId());
 
         return new AllocationSnapshot(week, result);
     }

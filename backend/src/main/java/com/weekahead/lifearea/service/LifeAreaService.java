@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.dto.LifeAreaRequest;
 import com.weekahead.lifearea.dto.LifeAreaResponse;
 import com.weekahead.lifearea.entity.LifeArea;
@@ -16,13 +17,16 @@ public class LifeAreaService {
 
     private final LifeAreaRepository lifeAreaRepository;
     private final CurrentUserService currentUserService;
+    private final DashboardCacheInvalidationService dashboardCacheInvalidationService;
 
     public LifeAreaService(
             LifeAreaRepository lifeAreaRepository,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            DashboardCacheInvalidationService dashboardCacheInvalidationService
     ) {
         this.lifeAreaRepository = lifeAreaRepository;
         this.currentUserService = currentUserService;
+        this.dashboardCacheInvalidationService = dashboardCacheInvalidationService;
     }
 
     public LifeAreaResponse create(LifeAreaRequest request) {
@@ -44,6 +48,8 @@ public class LifeAreaService {
         );
 
         LifeArea savedLifeArea = lifeAreaRepository.save(lifeArea);
+
+        dashboardCacheInvalidationService.invalidate(currentUser.getId());
 
         return toResponse(savedLifeArea);
     }
@@ -78,6 +84,8 @@ public class LifeAreaService {
 
         LifeArea updatedLifeArea = lifeAreaRepository.save(lifeArea);
 
+        dashboardCacheInvalidationService.invalidate(currentUser.getId());
+
         return toResponse(updatedLifeArea);
     }
 
@@ -90,6 +98,8 @@ public class LifeAreaService {
 
         lifeArea.setIsActive(false);
         lifeAreaRepository.save(lifeArea);
+
+        dashboardCacheInvalidationService.invalidate(currentUser.getId());
     }
 
     private LifeAreaResponse toResponse(LifeArea lifeArea) {

@@ -1,29 +1,34 @@
 package com.weekahead.allocation.service;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Mock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.weekahead.allocation.algorithm.AllocationEngine;
 import com.weekahead.allocation.algorithm.AllocationResult;
 import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
 import com.weekahead.auth.entity.User;
 import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.DashboardCacheInvalidationService;
 import com.weekahead.lifearea.entity.LifeArea;
 import com.weekahead.lifearea.repository.LifeAreaRepository;
 import com.weekahead.week.entity.Week;
 import com.weekahead.week.repository.WeekRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AllocationServiceTest {
@@ -43,6 +48,9 @@ class AllocationServiceTest {
     @Mock
     private AllocationEngine allocationEngine;
 
+    @Mock
+    private DashboardCacheInvalidationService dashboardCacheInvalidationService;
+
     private AllocationService allocationService;
 
     private User user;
@@ -56,7 +64,8 @@ class AllocationServiceTest {
                 weekRepository,
                 lifeAreaRepository,
                 weeklyAllocationRepository,
-                allocationEngine
+                allocationEngine,
+                dashboardCacheInvalidationService
         );
 
         user = new User(
@@ -135,6 +144,9 @@ class AllocationServiceTest {
 
         verify(allocationEngine)
                 .calculate(any());
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
     }
 
     @Test
@@ -194,6 +206,9 @@ class AllocationServiceTest {
                 lifeArea.getId(),
                 captor.getValue().lifeAreas().get(0).lifeAreaId()
         );
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
     }
 
     @Test
@@ -216,6 +231,7 @@ class AllocationServiceTest {
         verifyNoInteractions(lifeAreaRepository);
         verifyNoInteractions(allocationEngine);
         verifyNoInteractions(weeklyAllocationRepository);
+        verifyNoInteractions(dashboardCacheInvalidationService);
     }
 
     @Test
@@ -243,6 +259,7 @@ class AllocationServiceTest {
 
         verifyNoInteractions(allocationEngine);
         verifyNoInteractions(weeklyAllocationRepository);
+        verifyNoInteractions(dashboardCacheInvalidationService);
     }
 
     @Test
@@ -305,6 +322,9 @@ class AllocationServiceTest {
 
         verify(weeklyAllocationRepository)
                 .save(existingAllocation);
+
+        verify(dashboardCacheInvalidationService)
+                .invalidate(user.getId());
     }
 
     @Test
@@ -353,6 +373,8 @@ class AllocationServiceTest {
                 500,
                 result.result().totalRecommendedMinutes()
         );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
     }
 
     @Test
@@ -373,6 +395,7 @@ class AllocationServiceTest {
         assertEquals("Week not found", exception.getMessage());
 
         verifyNoInteractions(weeklyAllocationRepository);
+        verifyNoInteractions(dashboardCacheInvalidationService);
     }
 
     @Test
@@ -398,5 +421,7 @@ class AllocationServiceTest {
                 "Allocation recommendation not found",
                 exception.getMessage()
         );
+
+        verifyNoInteractions(dashboardCacheInvalidationService);
     }
 }
