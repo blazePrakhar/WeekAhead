@@ -90,6 +90,15 @@ public class AllocationService {
 
         AllocationResult result = allocationEngine.calculate(input);
 
+        List<Long> activeLifeAreaIds = activeLifeAreas.stream()
+                .map(LifeArea::getId)
+                .toList();
+
+        weeklyAllocationRepository.deleteByWeekIdAndLifeAreaIdNotIn(
+                weekId,
+                activeLifeAreaIds
+        );
+
         for (AllocationResultItem item : result.allocations()) {
             LifeArea lifeArea = activeLifeAreas.stream()
                     .filter(area -> area.getId().equals(item.lifeAreaId()))

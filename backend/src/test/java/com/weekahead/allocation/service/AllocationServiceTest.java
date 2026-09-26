@@ -237,6 +237,56 @@ class AllocationServiceTest {
     }
 
     @Test
+    void shouldRemoveAllocationsForInactiveLifeAreasDuringRegeneration() {
+
+        stubActiveLifeArea();
+
+        when(currentUserService.getCurrentUser())
+                .thenReturn(user);
+
+        when(weekRepository.findByIdAndUserId(1L, user.getId()))
+                .thenReturn(Optional.of(week));
+
+        LifeArea inactiveLifeArea = mock(LifeArea.class);
+
+        when(inactiveLifeArea.getIsActive())
+                .thenReturn(false);
+
+        when(lifeAreaRepository.findAllByUserId(user.getId()))
+                .thenReturn(List.of(lifeArea, inactiveLifeArea));
+
+        AllocationResult result = new AllocationResult(
+                500,
+                500,
+                List.of(
+                        new com.weekahead.allocation.algorithm.AllocationResultItem(
+                                lifeArea.getId(),
+                                lifeArea.getName(),
+                                lifeArea.getWeight(),
+                                lifeArea.getMinMinutes(),
+                                lifeArea.getMaxMinutes(),
+                                500
+                        )
+                )
+        );
+
+        when(allocationEngine.calculate(any()))
+                .thenReturn(result);
+
+        when(weeklyAllocationRepository
+                .findByWeekIdAndLifeAreaId(1L, lifeArea.getId()))
+                .thenReturn(Optional.empty());
+
+        allocationService.generateRecommendation(1L);
+
+        verify(weeklyAllocationRepository)
+                .deleteByWeekIdAndLifeAreaIdNotIn(
+                        1L,
+                        List.of(lifeArea.getId())
+                );
+    }
+
+    @Test
     void shouldRejectMissingWeek() {
 
         when(currentUserService.getCurrentUser())

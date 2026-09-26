@@ -19,4 +19,9 @@ public interface WeeklyAllocationRepository
     List<WeeklyAllocation> findAllByWeekIdInOrderByWeekIdAscLifeAreaIdAsc(
             List<Long> weekIds
     );
+
+    long deleteByWeekIdAndLifeAreaIdNotIn(
+            Long weekId,
+            List<Long> lifeAreaIds
+    );
 }
