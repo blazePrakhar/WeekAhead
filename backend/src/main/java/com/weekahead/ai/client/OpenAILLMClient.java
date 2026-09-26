@@ -1,5 +1,6 @@
 package com.weekahead.ai.client;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,8 +10,13 @@ import com.openai.models.ChatModel;
 import com.openai.models.responses.ResponseCreateParams;
 import com.openai.models.responses.StructuredResponseCreateParams;
 import com.weekahead.ai.dto.AIInsightContent;
+import com.weekahead.ai.exception.AIProviderException;
 
 @Component
+@ConditionalOnProperty(
+        name = "ai.provider",
+        havingValue = "openai"
+)
 public class OpenAILLMClient implements LLMClient {
 
     private final ObjectMapper objectMapper;
@@ -21,8 +27,10 @@ public class OpenAILLMClient implements LLMClient {
 
     @Override
     public String generateInsight(String structuredSummary) {
+
         try {
-            OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+            OpenAIClient client =
+                    OpenAIOkHttpClient.fromEnv();
 
             StructuredResponseCreateParams<AIInsightContent> params =
                     ResponseCreateParams.builder()
@@ -59,7 +67,8 @@ public class OpenAILLMClient implements LLMClient {
                             .stream()
                             .flatMap(item -> item.message().stream())
                             .flatMap(message -> message.content().stream())
-                            .flatMap(contentItem -> contentItem.outputText().stream())
+                            .flatMap(contentItem ->
+                                    contentItem.outputText().stream())
                             .findFirst()
                             .orElseThrow(() ->
                                     new IllegalStateException(
@@ -70,8 +79,8 @@ public class OpenAILLMClient implements LLMClient {
             return objectMapper.writeValueAsString(content);
 
         } catch (Exception exception) {
-            throw new IllegalStateException(
-                    "Failed to generate AI weekly insight",
+            throw new AIProviderException(
+                    "AI provider request failed",
                     exception
             );
         }

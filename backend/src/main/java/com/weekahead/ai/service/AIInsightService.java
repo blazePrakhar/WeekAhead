@@ -13,6 +13,7 @@ import com.weekahead.ai.dto.AIInsightResponse;
 import com.weekahead.ai.dto.AIInsightSummary;
 import com.weekahead.ai.dto.AILifeAreaSummary;
 import com.weekahead.ai.dto.AIRebalancingSummary;
+import com.weekahead.ai.exception.AIProviderException;
 import com.weekahead.allocation.entity.WeeklyAllocation;
 import com.weekahead.allocation.repository.WeeklyAllocationRepository;
 import com.weekahead.auth.entity.User;
@@ -63,6 +64,7 @@ public class AIInsightService {
     }
 
     public AIInsightResponse generateInsight(Long weekId) {
+
         AIInsightSummary summary = buildSummary(weekId);
 
         try {
@@ -85,6 +87,9 @@ public class AIInsightService {
                     llmResponse
             );
 
+        } catch (AIProviderException exception) {
+            throw exception;
+
         } catch (Exception exception) {
             throw new IllegalStateException(
                     "Failed to generate AI weekly insight",
@@ -94,7 +99,9 @@ public class AIInsightService {
     }
 
     public AIInsightSummary buildSummary(Long weekId) {
-        User currentUser = currentUserService.getCurrentUser();
+
+        User currentUser =
+                currentUserService.getCurrentUser();
 
         Week week =
                 weekRepository
@@ -153,10 +160,11 @@ public class AIInsightService {
                                     allocation.getPlannedMinutes();
 
                             int actualMinutes =
-                                    actualMinutesByLifeArea.getOrDefault(
-                                            lifeAreaId,
-                                            0
-                                    );
+                                    actualMinutesByLifeArea
+                                            .getOrDefault(
+                                                    lifeAreaId,
+                                                    0
+                                            );
 
                             double utilization =
                                     calculateUtilization(
@@ -211,7 +219,10 @@ public class AIInsightService {
         );
     }
 
-    private void validateInsight(AIInsightContent content) {
+    private void validateInsight(
+            AIInsightContent content
+    ) {
+
         if (content == null) {
             throw new IllegalStateException(
                     "LLM returned an empty insight"
@@ -220,6 +231,7 @@ public class AIInsightService {
 
         if (content.summary() == null
                 || content.summary().isBlank()) {
+
             throw new IllegalStateException(
                     "LLM returned an empty summary"
             );
@@ -242,6 +254,7 @@ public class AIInsightService {
             int actualMinutes,
             int recommendedMinutes
     ) {
+
         if (recommendedMinutes <= 0) {
             return 0.0;
         }
@@ -252,9 +265,12 @@ public class AIInsightService {
     private Map<Long, Integer> buildActualMinutesMap(
             List<Object[]> rows
     ) {
-        Map<Long, Integer> result = new HashMap<>();
+
+        Map<Long, Integer> result =
+                new HashMap<>();
 
         for (Object[] row : rows) {
+
             Long lifeAreaId =
                     ((Number) row[0]).longValue();
 
@@ -273,7 +289,9 @@ public class AIInsightService {
     private Map<Long, LifeArea> buildLifeAreaMap(
             Long userId
     ) {
-        Map<Long, LifeArea> result = new HashMap<>();
+
+        Map<Long, LifeArea> result =
+                new HashMap<>();
 
         for (LifeArea lifeArea :
                 lifeAreaRepository.findAllByUserId(userId)) {
@@ -288,6 +306,7 @@ public class AIInsightService {
     }
 
     private Map<Long, NeglectAssessment> buildNeglectMap() {
+
         Map<Long, NeglectAssessment> result =
                 new HashMap<>();
 
@@ -306,6 +325,7 @@ public class AIInsightService {
     private AIRebalancingSummary toRebalancingSummary(
             RebalancingSuggestion suggestion
     ) {
+
         return new AIRebalancingSummary(
                 suggestion.sourceLifeAreaId(),
                 suggestion.destinationLifeAreaId(),
