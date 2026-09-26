@@ -73,6 +73,7 @@ function AppRoutes() {
         />
         <Route path="/time-allocation" element={<TimeAllocationPage />} />
         <Route path="/time-logs" element={<TimeLogsPage />} />
+        <Route path="/dashboard" element={<InsightsPage />} />
         <Route path="/insights" element={<InsightsPage />} />
         <Route path="/rebalancing" element={<RebalancingPage />} />
       </Route>
