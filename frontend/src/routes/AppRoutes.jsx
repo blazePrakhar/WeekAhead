@@ -5,7 +5,6 @@ import { getHealth } from "../api/healthApi";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import LifeAreasPage from "../pages/LifeAreasPage";
-import DashboardPage from "../pages/DashboardPage";
 import ProtectedRoute from "./ProtectedRoute";
 import ProtectedLayout from "../layouts/ProtectedLayout";
 import WeeklyAvailabilityPage from "../pages/WeeklyAvailabilityPage";
@@ -69,7 +68,6 @@ function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<ProtectedLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/life-areas" element={<LifeAreasPage />} />
           <Route
             path="/weekly-availability"
@@ -77,6 +75,7 @@ function AppRoutes() {
           />
           <Route path="/time-allocation" element={<TimeAllocationPage />} />
           <Route path="/time-logs" element={<TimeLogsPage />} />
+          <Route path="/dashboard" element={<InsightsPage />} />
           <Route path="/insights" element={<InsightsPage />} />
           <Route path="/rebalancing" element={<RebalancingPage />} />
         </Route>
