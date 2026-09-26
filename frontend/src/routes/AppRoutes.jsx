@@ -6,6 +6,7 @@ import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import LifeAreasPage from "../pages/LifeAreasPage";
 import ProtectedRoute from "./ProtectedRoute";
+import ProtectedLayout from "../layouts/ProtectedLayout";
 import WeeklyAvailabilityPage from "../pages/WeeklyAvailabilityPage";
 import TimeAllocationPage from "../pages/TimeAllocationPage";
 import TimeLogsPage from "../pages/TimeLogsPage";
@@ -66,16 +67,18 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/life-areas" element={<LifeAreasPage />} />
-        <Route
-          path="/weekly-availability"
-          element={<WeeklyAvailabilityPage />}
-        />
-        <Route path="/time-allocation" element={<TimeAllocationPage />} />
-        <Route path="/time-logs" element={<TimeLogsPage />} />
-        <Route path="/dashboard" element={<InsightsPage />} />
-        <Route path="/insights" element={<InsightsPage />} />
-        <Route path="/rebalancing" element={<RebalancingPage />} />
+        <Route element={<ProtectedLayout />}>
+          <Route path="/life-areas" element={<LifeAreasPage />} />
+          <Route
+            path="/weekly-availability"
+            element={<WeeklyAvailabilityPage />}
+          />
+          <Route path="/time-allocation" element={<TimeAllocationPage />} />
+          <Route path="/time-logs" element={<TimeLogsPage />} />
+          <Route path="/dashboard" element={<InsightsPage />} />
+          <Route path="/insights" element={<InsightsPage />} />
+          <Route path="/rebalancing" element={<RebalancingPage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
