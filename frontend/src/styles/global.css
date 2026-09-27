@@ -863,12 +863,9 @@ select {
    ========================================================= */
 
 .weekly-availability-page {
-  width: min(960px, 100%);
-  padding: 2.5rem;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: 0 12px 32px rgb(15 23 42 / 8%);
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 0.5rem 0 2rem;
 }
 
 .weekly-availability-header {
@@ -876,75 +873,91 @@ select {
   align-items: flex-start;
   justify-content: space-between;
   gap: 2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
+}
+
+.weekly-availability-header > div {
+  min-width: 0;
+}
+
+.weekly-availability-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--wa-primary);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.weekly-availability-eyebrow svg {
+  flex-shrink: 0;
 }
 
 .weekly-availability-header h1 {
   margin: 0;
-  font-size: clamp(2rem, 5vw, 3rem);
-  line-height: 1.1;
+  color: var(--wa-text);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
 }
 
-.weekly-availability-card {
-  padding: 1.5rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #f8fafc;
+.weekly-availability-header .page-description {
+  max-width: 680px;
+  margin: 0.75rem 0 0;
+  color: var(--wa-text-muted);
+  font-size: 0.98rem;
+  line-height: 1.65;
 }
 
-.weekly-availability-form-header {
-  margin-bottom: 1.5rem;
+.weekly-availability-week-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--wa-border);
+  border-radius: var(--wa-radius-pill);
+  background: var(--wa-surface);
+  color: var(--wa-text-muted);
+  box-shadow: var(--wa-shadow-sm);
+  font-size: 0.82rem;
+  font-weight: 650;
 }
 
-.weekly-availability-form-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
+.weekly-availability-week-badge svg {
+  color: var(--wa-primary);
 }
 
-.weekly-availability-form-header p {
-  margin: 0.5rem 0 0;
-  color: #64748b;
+/* ---------------------------------------------------------
+   Feedback
+   --------------------------------------------------------- */
+
+.weekly-availability-success,
+.weekly-availability-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--wa-radius-md);
+  font-size: 0.9rem;
   line-height: 1.5;
 }
 
-.weekly-availability-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-}
-
-.weekly-availability-summary > div {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 1rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.weekly-availability-summary span {
-  color: #64748b;
-  font-size: 0.85rem;
-}
-
-.weekly-availability-summary strong {
-  color: #1f2937;
-  font-size: 1.1rem;
-}
-
-.weekly-availability-negative {
-  color: #b91c1c !important;
-}
-
 .weekly-availability-success {
-  margin-bottom: 1.5rem;
-  padding: 0.875rem 1rem;
   border: 1px solid #bbf7d0;
-  border-radius: 8px;
   background: #f0fdf4;
   color: #166534;
+}
+
+.weekly-availability-error {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .weekly-availability-success p,
@@ -952,40 +965,287 @@ select {
   margin: 0;
 }
 
-.weekly-availability-error {
-  margin-bottom: 1.5rem;
-  padding: 0.875rem 1rem;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
+/* ---------------------------------------------------------
+   Main Card
+   --------------------------------------------------------- */
+
+.weekly-availability-card {
+  overflow: hidden;
+  border: 1px solid var(--wa-border);
+  border-radius: var(--wa-radius-xl);
+  background: var(--wa-surface);
+  box-shadow: var(--wa-shadow-md);
 }
 
+.weekly-availability-form-header {
+  padding: 1.5rem 1.5rem 1.25rem;
+  border-bottom: 1px solid var(--wa-border);
+  background: linear-gradient(
+    180deg,
+    var(--wa-surface-subtle),
+    var(--wa-surface)
+  );
+}
+
+.weekly-availability-form-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.weekly-availability-form-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid var(--wa-border);
+  border-radius: var(--wa-radius-md);
+  background: var(--wa-surface);
+  color: var(--wa-primary);
+}
+
+.weekly-availability-form-header h2 {
+  margin: 0;
+  color: var(--wa-text);
+  font-size: 1.15rem;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+}
+
+.weekly-availability-form-header p {
+  max-width: 720px;
+  margin: 0.4rem 0 0;
+  color: var(--wa-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+/* ---------------------------------------------------------
+   Form
+   --------------------------------------------------------- */
+
+.weekly-availability-card form {
+  padding: 1.5rem;
+}
+
+.weekly-availability-section {
+  margin-bottom: 1.5rem;
+}
+
+.weekly-availability-section + .weekly-availability-section {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--wa-border);
+}
+
+.weekly-availability-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.weekly-availability-section-heading svg {
+  flex-shrink: 0;
+  color: var(--wa-primary);
+}
+
+.weekly-availability-section-heading h3 {
+  margin: 0;
+  color: var(--wa-text);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.weekly-availability-section-heading p {
+  margin: 0.2rem 0 0;
+  color: var(--wa-text-muted);
+  font-size: 0.8rem;
+}
+
+/* ---------------------------------------------------------
+   Input Icon
+   --------------------------------------------------------- */
+
+.weekly-availability-input-wrapper {
+  position: relative;
+}
+
+.weekly-availability-input-icon {
+  position: absolute;
+  top: 50%;
+  left: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wa-text-subtle);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.weekly-availability-input-wrapper input {
+  padding-left: 2.55rem;
+}
+
+/* ---------------------------------------------------------
+   Summary
+   --------------------------------------------------------- */
+
+.weekly-availability-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.weekly-summary-card {
+  position: relative;
+  min-width: 0;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--wa-border);
+  border-radius: var(--wa-radius-lg);
+  background: var(--wa-surface-subtle);
+  transition:
+    border-color var(--wa-duration-fast) var(--wa-ease-out),
+    transform var(--wa-duration-fast) var(--wa-ease-out);
+}
+
+.weekly-summary-card:hover {
+  border-color: var(--wa-border-strong);
+  transform: translateY(-1px);
+}
+
+.weekly-summary-card span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--wa-text-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.weekly-summary-card strong {
+  display: block;
+  color: var(--wa-text);
+  font-size: 1.25rem;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.weekly-summary-available {
+  border-left: 3px solid var(--wa-primary);
+}
+
+.weekly-summary-fixed {
+  border-left: 3px solid var(--wa-text-subtle);
+}
+
+.weekly-summary-discretionary {
+  border-left: 3px solid #16a34a;
+}
+
+.weekly-summary-negative {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+}
+
+.weekly-availability-negative {
+  color: #b91c1c !important;
+}
+
+/* ---------------------------------------------------------
+   Actions
+   --------------------------------------------------------- */
+
+.weekly-availability-card .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--wa-border);
+}
+
+/* ---------------------------------------------------------
+   Loading
+   --------------------------------------------------------- */
+
 .weekly-availability-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
   padding: 2rem;
-  text-align: center;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #f8fafc;
-  color: #64748b;
+  border: 1px solid var(--wa-border);
+  border-radius: var(--wa-radius-xl);
+  background: var(--wa-surface);
+  color: var(--wa-text-muted);
+  box-shadow: var(--wa-shadow-sm);
 }
 
 .weekly-availability-status p {
   margin: 0;
+  font-size: 0.9rem;
 }
 
-@media (max-width: 700px) {
-  .weekly-availability-page {
-    padding: 1.5rem;
-  }
+/* ---------------------------------------------------------
+   Responsive
+   --------------------------------------------------------- */
 
+@media (max-width: 800px) {
   .weekly-availability-header {
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
+  }
+
+  .weekly-availability-week-badge {
+    align-self: flex-start;
   }
 
   .weekly-availability-summary {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .weekly-availability-page {
+    padding: 0 0 1.5rem;
+  }
+
+  .weekly-availability-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .weekly-availability-header h1 {
+    font-size: 2rem;
+  }
+
+  .weekly-availability-card {
+    border-radius: var(--wa-radius-lg);
+  }
+
+  .weekly-availability-form-header,
+  .weekly-availability-card form {
+    padding: 1.15rem;
+  }
+
+  .weekly-availability-form-heading {
+    gap: 0.7rem;
+  }
+
+  .weekly-availability-summary {
+    gap: 0.6rem;
+  }
+
+  .weekly-summary-card {
+    padding: 0.9rem;
+  }
+
+  .weekly-availability-card .form-actions {
+    justify-content: stretch;
+  }
+
+  .weekly-availability-card .form-actions .primary-button {
+    width: 100%;
   }
 }
 
