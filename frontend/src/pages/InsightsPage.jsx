@@ -1,5 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  Activity,
+  AlertTriangle,
+  ArrowLeftRight,
+  BarChart3,
+  BrainCircuit,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  Lightbulb,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
+import { motion } from "motion/react";
+import {
   CartesianGrid,
   Line,
   LineChart,
@@ -9,10 +23,11 @@ import {
   YAxis,
 } from "recharts";
 
-import { getWeeklyDashboard } from "../api/dashboardApi";
-import { getNeglectInsights } from "../api/neglectApi";
 import { getAnalytics } from "../api/analyticsApi";
 import { generateWeeklyInsight } from "../api/aiInsightApi";
+import { getNeglectInsights } from "../api/neglectApi";
+import { getRebalancingSuggestions } from "../api/rebalancingApi";
+import { getCurrentWeek } from "../api/weekApi";
 
 const formatHours = (minutes) => {
   const value = Number(minutes ?? 0);
@@ -36,51 +51,16 @@ const formatPercentage = (value) => {
   return `${number.toFixed(0)}%`;
 };
 
-const calculateUtilization = (actualMinutes, recommendedMinutes) => {
-  const actual = Number(actualMinutes ?? 0);
-  const recommended = Number(recommendedMinutes ?? 0);
-
-  if (!Number.isFinite(actual) || !Number.isFinite(recommended)) {
-    return 0;
-  }
-
-  if (recommended <= 0) {
-    return 0;
-  }
-
-  return (actual / recommended) * 100;
-};
-
-const getDifferenceMinutes = (recommendedMinutes, actualMinutes) => {
-  const recommended = Number(recommendedMinutes ?? 0);
-  const actual = Number(actualMinutes ?? 0);
-
-  if (!Number.isFinite(recommended) || !Number.isFinite(actual)) {
-    return 0;
-  }
-
-  return actual - recommended;
-};
-
-const getUtilizationClass = (utilization) => {
-  if (utilization >= 100) {
-    return "dashboard-status dashboard-status-success";
-  }
-
-  if (utilization >= 80) {
-    return "dashboard-status dashboard-status-warning";
-  }
-
-  return "dashboard-status dashboard-status-danger";
-};
-
 function InsightsPage() {
-  const [dashboard, setDashboard] = useState(null);
+  const [currentWeek, setCurrentWeek] = useState(null);
+
   const [neglectData, setNeglectData] = useState([]);
-  const [dashboardLoading, setDashboardLoading] = useState(true);
   const [neglectLoading, setNeglectLoading] = useState(true);
-  const [dashboardError, setDashboardError] = useState("");
   const [neglectError, setNeglectError] = useState("");
+
+  const [rebalancingSuggestions, setRebalancingSuggestions] = useState([]);
+  const [rebalancingLoading, setRebalancingLoading] = useState(true);
+  const [rebalancingError, setRebalancingError] = useState("");
 
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
@@ -93,26 +73,16 @@ function InsightsPage() {
   useEffect(() => {
     let mounted = true;
 
-    const loadDashboard = async () => {
-      setDashboardLoading(true);
-      setDashboardError("");
-
+    const loadCurrentWeek = async () => {
       try {
-        const response = await getWeeklyDashboard();
+        const response = await getCurrentWeek();
 
         if (mounted) {
-          setDashboard(response?.data ?? response);
+          setCurrentWeek(response);
         }
       } catch (error) {
         if (mounted) {
-          setDashboardError(
-            error?.response?.data?.message ||
-              "Unable to load the weekly dashboard.",
-          );
-        }
-      } finally {
-        if (mounted) {
-          setDashboardLoading(false);
+          console.error("Failed to load current week:", error);
         }
       }
     };
@@ -143,6 +113,32 @@ function InsightsPage() {
       }
     };
 
+    const loadRebalancing = async () => {
+      setRebalancingLoading(true);
+      setRebalancingError("");
+
+      try {
+        const response = await getRebalancingSuggestions();
+
+        if (mounted) {
+          const data = response?.data ?? response;
+
+          setRebalancingSuggestions(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        if (mounted) {
+          setRebalancingError(
+            error?.response?.data?.message ||
+              "Unable to load rebalancing suggestions.",
+          );
+        }
+      } finally {
+        if (mounted) {
+          setRebalancingLoading(false);
+        }
+      }
+    };
+
     const loadAnalytics = async () => {
       setAnalyticsLoading(true);
       setAnalyticsError("");
@@ -151,7 +147,7 @@ function InsightsPage() {
         const response = await getAnalytics(12);
 
         if (mounted) {
-          setAnalytics(response ?? null);
+          setAnalytics(response?.data ?? response ?? null);
         }
       } catch (error) {
         if (mounted) {
@@ -167,22 +163,15 @@ function InsightsPage() {
       }
     };
 
-    loadDashboard();
+    loadCurrentWeek();
     loadNeglect();
+    loadRebalancing();
     loadAnalytics();
 
     return () => {
       mounted = false;
     };
   }, []);
-
-  const lifeAreas = useMemo(() => {
-    if (!dashboard?.lifeAreas) {
-      return [];
-    }
-
-    return Array.isArray(dashboard.lifeAreas) ? dashboard.lifeAreas : [];
-  }, [dashboard]);
 
   const utilizationTrendData = useMemo(() => {
     const weeklyTrends = analytics?.weeklyTrends;
@@ -241,36 +230,10 @@ function InsightsPage() {
       }));
   }, [analytics]);
 
-  const rebalancingSuggestions = useMemo(() => {
-    if (!dashboard?.rebalancingSuggestions) {
-      return [];
-    }
-
-    return Array.isArray(dashboard.rebalancingSuggestions)
-      ? dashboard.rebalancingSuggestions
-      : [];
-  }, [dashboard]);
-
-  const totalAvailableMinutes = Number(dashboard?.availableMinutes ?? 0);
-
-  const totalRecommendedMinutes = Number(
-    dashboard?.totalRecommendedMinutes ?? 0,
-  );
-
-  const totalActualMinutes = Number(dashboard?.totalActualMinutes ?? 0);
-
-  const remainingMinutes = Math.max(
-    0,
-    totalAvailableMinutes - totalActualMinutes,
-  );
-
-  const overallUtilization = calculateUtilization(
-    totalActualMinutes,
-    totalRecommendedMinutes,
-  );
-
   const handleGenerateInsight = async () => {
-    if (!dashboard?.weekId) {
+    const weekId = currentWeek?.id ?? currentWeek?.weekId;
+
+    if (!weekId) {
       setAiError("No current week is available.");
       return;
     }
@@ -279,9 +242,9 @@ function InsightsPage() {
     setAiError("");
 
     try {
-      const response = await generateWeeklyInsight(dashboard.weekId);
+      const response = await generateWeeklyInsight(weekId);
 
-      let parsedInsight = response?.insight;
+      let parsedInsight = response?.insight ?? response?.data?.insight;
 
       if (typeof parsedInsight === "string") {
         parsedInsight = JSON.parse(parsedInsight);
@@ -301,240 +264,109 @@ function InsightsPage() {
     }
   };
 
-  if (dashboardLoading) {
-    return (
-      <main className="dashboard-page">
-        <div className="dashboard-container">
-          <div className="dashboard-page-header">
-            <div>
-              <h1>Weekly Dashboard</h1>
-              <p>Loading your current week...</p>
-            </div>
-          </div>
-
-          <div className="dashboard-loading">Loading dashboard data...</div>
-        </div>
-      </main>
-    );
-  }
-
-  if (dashboardError) {
-    return (
-      <main className="dashboard-page">
-        <div className="dashboard-container">
-          <div className="dashboard-page-header">
-            <div>
-              <h1>Weekly Dashboard</h1>
-              <p>Overview of your current week.</p>
-            </div>
-          </div>
-
-          <div className="dashboard-error">
-            <h2>Unable to load dashboard</h2>
-            <p>{dashboardError}</p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!dashboard) {
-    return (
-      <main className="dashboard-page">
-        <div className="dashboard-container">
-          <div className="dashboard-page-header">
-            <div>
-              <h1>Weekly Dashboard</h1>
-              <p>Overview of your current week.</p>
-            </div>
-          </div>
-
-          <div className="dashboard-empty">
-            <h2>No dashboard data available</h2>
-            <p>
-              Create or configure your current week before viewing the
-              dashboard.
-            </p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="dashboard-page">
-      <div className="dashboard-container">
-        <header className="dashboard-page-header">
+    <main className="insights-page">
+      <div className="insights-container">
+        <motion.header
+          className="insights-header"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.28,
+            ease: "easeOut",
+          }}
+        >
           <div>
-            <p className="dashboard-eyebrow">WeekAhead</p>
-            <h1>Weekly Dashboard</h1>
+            <p className="insights-eyebrow">WEEK AHEAD</p>
 
-            <p>
-              {dashboard.weekStartDate
-                ? `Week starting ${dashboard.weekStartDate}`
-                : "Overview of your current week."}
+            <h1>Weekly Insights</h1>
+
+            <p className="insights-header-description">
+              Understand patterns in your time, identify neglected areas, and
+              review suggestions for the rest of your week.
             </p>
           </div>
-        </header>
 
-        {/* Weekly Overview */}
-        <section className="dashboard-section">
-          <div className="dashboard-section-header">
-            <div>
-              <h2>Weekly Overview</h2>
-              <p>A quick view of your available and used time.</p>
-            </div>
+          <div className="insights-week-badge">
+            <CalendarDays size={16} />
+
+            <span>{currentWeek?.weekStartDate ?? "Current week"}</span>
           </div>
-
-          <div className="dashboard-summary-grid">
-            <article className="dashboard-summary-card">
-              <span>Available</span>
-              <strong>{formatHours(totalAvailableMinutes)}</strong>
-            </article>
-
-            <article className="dashboard-summary-card">
-              <span>Recommended</span>
-              <strong>{formatHours(totalRecommendedMinutes)}</strong>
-            </article>
-
-            <article className="dashboard-summary-card">
-              <span>Tracked</span>
-              <strong>{formatHours(totalActualMinutes)}</strong>
-            </article>
-
-            <article className="dashboard-summary-card">
-              <span>Remaining</span>
-              <strong>{formatHours(remainingMinutes)}</strong>
-            </article>
-
-            <article className="dashboard-summary-card">
-              <span>Utilization</span>
-              <strong>{formatPercentage(overallUtilization)}</strong>
-            </article>
-          </div>
-        </section>
-
-        {/* Life Area Breakdown */}
-        <section className="dashboard-section">
-          <div className="dashboard-section-header">
-            <div>
-              <h2>Life Area Breakdown</h2>
-              <p>
-                Compare recommended time with the time you have actually
-                tracked.
-              </p>
-            </div>
-          </div>
-
-          {lifeAreas.length === 0 ? (
-            <div className="dashboard-empty">
-              <h3>No life-area data</h3>
-              <p>
-                There are no life-area allocation records for this week yet.
-              </p>
-            </div>
-          ) : (
-            <div className="dashboard-table-wrapper">
-              <table className="dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Life Area</th>
-                    <th>Recommended</th>
-                    <th>Actual</th>
-                    <th>Difference</th>
-                    <th>Utilization</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {lifeAreas.map((area) => {
-                    const utilization = calculateUtilization(
-                      area.actualMinutes,
-                      area.recommendedMinutes,
-                    );
-
-                    const difference = getDifferenceMinutes(
-                      area.recommendedMinutes,
-                      area.actualMinutes,
-                    );
-
-                    return (
-                      <tr key={area.lifeAreaId}>
-                        <td>
-                          <strong>{area.lifeAreaName}</strong>
-                        </td>
-
-                        <td>{formatHours(area.recommendedMinutes)}</td>
-
-                        <td>{formatHours(area.actualMinutes)}</td>
-
-                        <td>
-                          <span
-                            className={
-                              difference >= 0
-                                ? "dashboard-difference positive"
-                                : "dashboard-difference negative"
-                            }
-                          >
-                            {difference >= 0 ? "+" : ""}
-                            {formatHours(Math.abs(difference))}
-                          </span>
-                        </td>
-
-                        <td>
-                          <span className={getUtilizationClass(utilization)}>
-                            {formatPercentage(utilization)}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+        </motion.header>
 
         {/* Neglected Areas */}
-        <section className="dashboard-section">
-          <div className="dashboard-section-header">
+
+        <section className="insights-section">
+          <div className="insights-section-header">
             <div>
+              <p className="insights-section-kicker">ATTENTION</p>
+
               <h2>Neglected Areas</h2>
+
               <p>Areas identified by the existing neglect detection logic.</p>
             </div>
           </div>
 
           {neglectLoading ? (
-            <div className="dashboard-loading">Loading neglected areas...</div>
+            <div className="insights-feedback insights-feedback-loading">
+              <Clock3 size={20} />
+
+              <span>Loading neglected areas...</span>
+            </div>
           ) : neglectError ? (
-            <div className="dashboard-error">
-              <p>{neglectError}</p>
+            <div className="insights-feedback insights-feedback-error">
+              <AlertTriangle size={20} />
+
+              <div>
+                <strong>Unable to load neglected areas</strong>
+
+                <p>{neglectError}</p>
+              </div>
             </div>
           ) : neglectData.length === 0 ? (
-            <div className="dashboard-empty dashboard-empty-positive">
-              <h3>Everything is on track</h3>
-              <p>
-                No neglected life areas were reported for the current analysis
-                period.
-              </p>
+            <div className="insights-positive-card">
+              <div className="insights-positive-icon">
+                <CheckCircle2 size={22} />
+              </div>
+
+              <div>
+                <h3>Everything is on track</h3>
+
+                <p>
+                  No neglected life areas were reported for the current analysis
+                  period.
+                </p>
+              </div>
             </div>
           ) : (
-            <div className="dashboard-card-grid">
+            <div className="insights-card-grid">
               {neglectData.map((item) => (
-                <article className="dashboard-info-card" key={item.lifeAreaId}>
-                  <div className="dashboard-info-card-header">
-                    <h3>
-                      {item.lifeAreaName || `Life Area ${item.lifeAreaId}`}
-                    </h3>
+                <motion.article
+                  className="insights-info-card insights-neglect-card"
+                  key={item.lifeAreaId}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.25,
+                    ease: "easeOut",
+                  }}
+                >
+                  <div className="insights-info-card-header">
+                    <div className="insights-info-card-icon insights-info-card-icon-warning">
+                      <AlertTriangle size={18} />
+                    </div>
 
                     {item.level && (
-                      <span className="dashboard-severity">{item.level}</span>
+                      <span className="insights-severity">{item.level}</span>
                     )}
                   </div>
 
-                  <div className="dashboard-info-card-stats">
+                  <h3>{item.lifeAreaName ?? `Life Area ${item.lifeAreaId}`}</h3>
+
+                  <div className="insights-info-card-stats">
                     <div>
                       <span>Utilization</span>
+
                       <strong>
                         {formatPercentage(Number(item.utilization ?? 0) * 100)}
                       </strong>
@@ -542,82 +374,135 @@ function InsightsPage() {
 
                     <div>
                       <span>Under target</span>
+
                       <strong>{item.consecutiveUnderTargetWeeks ?? 0}</strong>
                     </div>
                   </div>
-                </article>
+                </motion.article>
               ))}
             </div>
           )}
         </section>
 
         {/* Rebalancing Suggestions */}
-        <section className="dashboard-section">
-          <div className="dashboard-section-header">
+
+        <section className="insights-section">
+          <div className="insights-section-header">
             <div>
+              <p className="insights-section-kicker">REBALANCE</p>
+
               <h2>Rebalancing Suggestions</h2>
+
               <p>
-                These are suggestions for adjusting the remaining time in your
-                week. They do not change your plan automatically.
+                Possible ways to redirect remaining time between life areas.
+                Suggestions never change your plan automatically.
               </p>
             </div>
           </div>
 
-          {rebalancingSuggestions.length === 0 ? (
-            <div className="dashboard-empty">
+          {rebalancingLoading ? (
+            <div className="insights-feedback insights-feedback-loading">
+              <Clock3 size={20} />
+
+              <span>Loading rebalancing suggestions...</span>
+            </div>
+          ) : rebalancingError ? (
+            <div className="insights-feedback insights-feedback-error">
+              <AlertTriangle size={20} />
+
+              <div>
+                <strong>Unable to load rebalancing suggestions</strong>
+
+                <p>{rebalancingError}</p>
+              </div>
+            </div>
+          ) : rebalancingSuggestions.length === 0 ? (
+            <div className="insights-empty">
+              <div className="insights-empty-icon">
+                <ArrowLeftRight size={22} />
+              </div>
+
               <h3>No rebalancing suggestions</h3>
+
               <p>
                 There are no current suggestions for shifting time between life
                 areas.
               </p>
             </div>
           ) : (
-            <div className="dashboard-card-grid">
+            <div className="insights-card-grid">
               {rebalancingSuggestions.map((suggestion, index) => (
-                <article
-                  className="dashboard-info-card"
+                <motion.article
+                  className="insights-info-card"
                   key={
                     suggestion.id ??
                     `${suggestion.sourceLifeAreaId}-${suggestion.destinationLifeAreaId}-${index}`
                   }
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.25,
+                    ease: "easeOut",
+                  }}
                 >
-                  <div className="dashboard-rebalance-route">
+                  <div className="insights-info-card-header">
+                    <div className="insights-info-card-icon">
+                      <ArrowLeftRight size={18} />
+                    </div>
+                  </div>
+
+                  <div className="insights-route">
                     <strong>
                       {suggestion.sourceLifeAreaName ??
-                        `Area ${suggestion.sourceLifeAreaId}`}
+                        suggestion.fromLifeAreaName ??
+                        `Area ${suggestion.sourceLifeAreaId ?? suggestion.fromLifeAreaId}`}
                     </strong>
 
-                    <span>→</span>
+                    <ArrowLeftRight size={16} />
 
                     <strong>
                       {suggestion.destinationLifeAreaName ??
-                        `Area ${suggestion.destinationLifeAreaId}`}
+                        suggestion.toLifeAreaName ??
+                        `Area ${suggestion.destinationLifeAreaId ?? suggestion.toLifeAreaId}`}
                     </strong>
                   </div>
 
-                  <p className="dashboard-transfer">
-                    Potential transfer:{" "}
-                    <strong>
-                      {formatHours(suggestion.transferableMinutes)}
-                    </strong>
-                  </p>
+                  <div className="insights-transfer">
+                    <span>Potential transfer</span>
 
-                  <p className="dashboard-reason">
+                    <strong>
+                      {formatHours(
+                        suggestion.transferableMinutes ?? suggestion.minutes,
+                      )}
+                    </strong>
+                  </div>
+
+                  <p className="insights-card-description">
                     {suggestion.explanation ??
                       suggestion.reason ??
                       "No explanation was provided."}
                   </p>
-                </article>
+
+                  <div className="insights-suggestion-note">
+                    <Lightbulb size={15} />
+
+                    <span>Suggestion only — your allocation is unchanged.</span>
+                  </div>
+                </motion.article>
               ))}
             </div>
           )}
         </section>
 
         {/* Historical Trends */}
-        <section className="dashboard-section">
-          <div className="dashboard-section-header">
+
+        <section className="insights-section">
+          <div className="insights-section-header">
             <div>
+              <p className="insights-section-kicker">PATTERNS</p>
+
               <h2>Historical Trends</h2>
+
               <p>
                 Review how your time usage has changed across previous weeks.
               </p>
@@ -625,34 +510,51 @@ function InsightsPage() {
           </div>
 
           {analyticsLoading ? (
-            <div className="dashboard-loading">
-              Loading historical trends...
+            <div className="insights-feedback insights-feedback-loading">
+              <Clock3 size={20} />
+
+              <span>Loading historical trends...</span>
             </div>
           ) : analyticsError ? (
-            <div className="dashboard-error">
-              <h3>Unable to load historical trends</h3>
-              <p>{analyticsError}</p>
+            <div className="insights-feedback insights-feedback-error">
+              <AlertTriangle size={20} />
+
+              <div>
+                <strong>Unable to load historical trends</strong>
+
+                <p>{analyticsError}</p>
+              </div>
             </div>
           ) : !Array.isArray(analytics?.weeklyTrends) ||
             analytics.weeklyTrends.length === 0 ? (
-            <div className="dashboard-empty">
+            <div className="insights-empty">
+              <div className="insights-empty-icon">
+                <BarChart3 size={22} />
+              </div>
+
               <h3>No historical data yet</h3>
+
               <p>
                 Historical trends will appear here once completed weeks contain
                 tracked activity and recommendation data.
               </p>
             </div>
           ) : (
-            <>
-              <div className="dashboard-chart-card">
-                <div className="dashboard-chart-header">
+            <div className="insights-chart-grid">
+              <article className="insights-chart-card">
+                <div className="insights-chart-header">
+                  <div className="insights-chart-icon">
+                    <TrendingUp size={18} />
+                  </div>
+
                   <div>
                     <h3>Weekly Utilization</h3>
+
                     <p>Actual tracked time compared with recommended time.</p>
                   </div>
                 </div>
 
-                <div className="dashboard-chart">
+                <div className="insights-chart">
                   <ResponsiveContainer width="100%" height={320}>
                     <LineChart
                       data={utilizationTrendData}
@@ -687,12 +589,17 @@ function InsightsPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              </article>
 
-              <div className="dashboard-chart-card">
-                <div className="dashboard-chart-header">
+              <article className="insights-chart-card">
+                <div className="insights-chart-header">
+                  <div className="insights-chart-icon">
+                    <BarChart3 size={18} />
+                  </div>
+
                   <div>
                     <h3>Recommended vs Actual</h3>
+
                     <p>
                       Compare recommended time with the time you actually
                       tracked each week.
@@ -700,7 +607,7 @@ function InsightsPage() {
                   </div>
                 </div>
 
-                <div className="dashboard-chart">
+                <div className="insights-chart">
                   <ResponsiveContainer width="100%" height={320}>
                     <LineChart
                       data={recommendedActualTrendData}
@@ -747,62 +654,103 @@ function InsightsPage() {
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
-            </>
+              </article>
+            </div>
           )}
         </section>
 
         {/* AI Weekly Insight */}
-        <section className="dashboard-section">
-          <div className="dashboard-section-header">
+
+        <section className="insights-section">
+          <div className="insights-section-header insights-ai-header">
             <div>
+              <p className="insights-section-kicker">AI ASSISTED</p>
+
               <h2>AI Weekly Insight</h2>
+
               <p>
-                Get a natural-language summary of your current week based on the
-                backend's weekly data.
+                Get a natural-language summary based on the backend's weekly
+                data.
               </p>
             </div>
 
             <button
               type="button"
-              className="dashboard-primary-button"
+              className="insights-primary-button"
               onClick={handleGenerateInsight}
               disabled={aiLoading}
             >
-              {aiLoading ? "Generating Insight..." : "Generate Insight"}
+              <Sparkles size={17} />
+
+              <span>
+                {aiLoading ? "Generating Insight..." : "Generate Insight"}
+              </span>
             </button>
           </div>
 
           {aiLoading ? (
-            <div className="dashboard-loading">
-              Generating your weekly insight...
+            <div className="insights-feedback insights-feedback-loading">
+              <BrainCircuit size={20} />
+
+              <span>Generating your weekly insight...</span>
             </div>
           ) : aiError ? (
-            <div className="dashboard-error">
-              <h3>Unable to generate insight</h3>
-              <p>{aiError}</p>
+            <div className="insights-feedback insights-feedback-error">
+              <AlertTriangle size={20} />
+
+              <div>
+                <strong>Unable to generate insight</strong>
+
+                <p>{aiError}</p>
+              </div>
             </div>
           ) : !aiInsight ? (
-            <div className="dashboard-empty">
-              <h3>No insight generated yet</h3>
-              <p>
-                Generate an AI weekly insight to receive a concise summary,
-                observations, and suggested actions.
-              </p>
+            <div className="insights-ai-empty">
+              <div className="insights-ai-icon">
+                <BrainCircuit size={24} />
+              </div>
+
+              <div>
+                <h3>No insight generated yet</h3>
+
+                <p>
+                  Generate an AI weekly insight to receive a concise summary,
+                  observations, and suggested actions.
+                </p>
+              </div>
             </div>
           ) : (
-            <div className="dashboard-ai-card">
+            <motion.div
+              className="insights-ai-card"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 0.28,
+                ease: "easeOut",
+              }}
+            >
               {aiInsight.summary && (
-                <div className="dashboard-ai-summary">
-                  <h3>Summary</h3>
-                  <p>{aiInsight.summary}</p>
+                <div className="insights-ai-summary">
+                  <div className="insights-ai-section-icon">
+                    <Sparkles size={17} />
+                  </div>
+
+                  <div>
+                    <h3>Summary</h3>
+
+                    <p>{aiInsight.summary}</p>
+                  </div>
                 </div>
               )}
 
               {Array.isArray(aiInsight.observations) &&
                 aiInsight.observations.length > 0 && (
-                  <div className="dashboard-ai-section">
-                    <h3>Observations</h3>
+                  <div className="insights-ai-section">
+                    <div className="insights-ai-section-heading">
+                      <Activity size={17} />
+
+                      <h3>Observations</h3>
+                    </div>
 
                     <ul>
                       {aiInsight.observations.map((observation, index) => (
@@ -814,8 +762,12 @@ function InsightsPage() {
 
               {Array.isArray(aiInsight.actions) &&
                 aiInsight.actions.length > 0 && (
-                  <div className="dashboard-ai-section">
-                    <h3>Suggested Actions</h3>
+                  <div className="insights-ai-section">
+                    <div className="insights-ai-section-heading">
+                      <Lightbulb size={17} />
+
+                      <h3>Suggested Actions</h3>
+                    </div>
 
                     <ul>
                       {aiInsight.actions.map((action, index) => (
@@ -824,7 +776,7 @@ function InsightsPage() {
                     </ul>
                   </div>
                 )}
-            </div>
+            </motion.div>
           )}
         </section>
       </div>

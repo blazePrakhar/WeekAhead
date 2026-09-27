@@ -10,6 +10,7 @@ import ProtectedLayout from "../layouts/ProtectedLayout";
 import WeeklyAvailabilityPage from "../pages/WeeklyAvailabilityPage";
 import TimeAllocationPage from "../pages/TimeAllocationPage";
 import TimeLogsPage from "../pages/TimeLogsPage";
+import DashboardPage from "../pages/DashboardPage";
 import InsightsPage from "../pages/InsightsPage";
 import RebalancingPage from "../pages/RebalancingPage";
 
@@ -75,7 +76,7 @@ function AppRoutes() {
           />
           <Route path="/time-allocation" element={<TimeAllocationPage />} />
           <Route path="/time-logs" element={<TimeLogsPage />} />
-          <Route path="/dashboard" element={<InsightsPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/insights" element={<InsightsPage />} />
           <Route path="/rebalancing" element={<RebalancingPage />} />
         </Route>
