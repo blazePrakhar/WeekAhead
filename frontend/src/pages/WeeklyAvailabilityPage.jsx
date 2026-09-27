@@ -1,3 +1,5 @@
+import { CalendarClock, Timer } from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -188,37 +190,101 @@ function WeeklyAvailabilityPage() {
   }
 
   return (
-    <main className="weekly-availability-page">
+    <motion.main
+      className="weekly-availability-page"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.3,
+        ease: [0.2, 0.8, 0.2, 1],
+      }}
+    >
       <section className="weekly-availability-header">
-        <div>
-          <h1>Weekly Availability</h1>
-          <p className="page-description">
-            Configure the time available for your week and your fixed
-            commitments.
-          </p>
+        <div className="weekly-availability-title-row">
+          <span className="weekly-availability-page-icon" aria-hidden="true">
+            <CalendarClock size={22} strokeWidth={1.8} />
+          </span>
+
+          <div>
+            <p className="weekly-availability-eyebrow">Shape your week</p>
+
+            <h1>Weekly Availability</h1>
+
+            <p className="page-description">
+              Configure the time available for your week and your fixed
+              commitments.
+            </p>
+          </div>
+        </div>
+
+        <div className="weekly-availability-week-badge">
+          <span>{week ? "Current week" : "New week"}</span>
         </div>
       </section>
 
       {success && (
-        <div className="weekly-availability-success">
+        <motion.div
+          className="weekly-availability-success"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <span
+            className="weekly-availability-feedback-icon"
+            aria-hidden="true"
+          >
+            ✓
+          </span>
+
           <p>{success}</p>
-        </div>
+        </motion.div>
       )}
 
       {error && (
-        <div className="weekly-availability-error">
+        <motion.div
+          className="weekly-availability-error"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <span
+            className="weekly-availability-feedback-icon"
+            aria-hidden="true"
+          >
+            !
+          </span>
+
           <p>{error}</p>
-        </div>
+        </motion.div>
       )}
 
-      <section className="weekly-availability-card">
+      <motion.section
+        className="weekly-availability-card"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.35,
+          delay: 0.05,
+          ease: [0.2, 0.8, 0.2, 1],
+        }}
+      >
         <div className="weekly-availability-form-header">
-          <h2>{week ? "Current Week" : "Set Up Your Week"}</h2>
+          <div>
+            <p className="weekly-availability-form-eyebrow">
+              {week ? "Current planning window" : "Weekly setup"}
+            </p>
 
-          <p>
-            Enter your total available weekly time and the time already
-            committed to fixed responsibilities.
-          </p>
+            <h2>{week ? "Current Week" : "Set Up Your Week"}</h2>
+
+            <p>
+              Enter your total available weekly time and the time already
+              committed to fixed responsibilities.
+            </p>
+          </div>
+
+          <span className="weekly-availability-form-symbol" aria-hidden="true">
+            ◷
+          </span>
         </div>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
@@ -238,189 +304,227 @@ function WeeklyAvailabilityPage() {
             )}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="availableHours">Available Hours</label>
+          <div className="weekly-availability-input-section">
+            <div className="weekly-availability-input-section-header">
+              <div>
+                <span className="weekly-availability-input-icon">
+                  <CalendarClock size={16} strokeWidth={1.8} />
+                </span>
 
-              <input
-                id="availableHours"
-                type="number"
-                min="0"
-                step="1"
-                placeholder="e.g. 40"
-                {...register("availableHours", {
-                  required: "Available hours are required.",
-                  min: {
-                    value: 0,
-                    message: "Available hours cannot be negative.",
-                  },
-                  validate: (value) =>
-                    Number.isInteger(Number(value)) ||
-                    "Available hours must be a whole number.",
-                })}
-              />
-
-              {errors.availableHours && (
-                <p className="form-error">{errors.availableHours.message}</p>
-              )}
+                <div>
+                  <h3>Available Time</h3>
+                  <p>Time you can allocate during the week.</p>
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="availableMinutes">Available Minutes</label>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="availableHours">Hours</label>
 
-              <input
-                id="availableMinutes"
-                type="number"
-                min="0"
-                max="59"
-                step="1"
-                placeholder="e.g. 30"
-                {...register("availableMinutes", {
-                  required: "Available minutes are required.",
-                  min: {
-                    value: 0,
-                    message: "Minutes cannot be negative.",
-                  },
-                  max: {
-                    value: 59,
-                    message: "Minutes must be between 0 and 59.",
-                  },
-                  validate: (value) =>
-                    Number.isInteger(Number(value)) ||
-                    "Minutes must be a whole number.",
-                })}
-              />
+                <input
+                  id="availableHours"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="e.g. 40"
+                  {...register("availableHours", {
+                    required: "Available hours are required.",
+                    min: {
+                      value: 0,
+                      message: "Available hours cannot be negative.",
+                    },
+                    validate: (value) =>
+                      Number.isInteger(Number(value)) ||
+                      "Available hours must be a whole number.",
+                  })}
+                />
 
-              {errors.availableMinutes && (
-                <p className="form-error">{errors.availableMinutes.message}</p>
-              )}
+                {errors.availableHours && (
+                  <p className="form-error">{errors.availableHours.message}</p>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="availableMinutes">Minutes</label>
+
+                <input
+                  id="availableMinutes"
+                  type="number"
+                  min="0"
+                  max="59"
+                  step="1"
+                  placeholder="e.g. 30"
+                  {...register("availableMinutes", {
+                    required: "Available minutes are required.",
+                    min: {
+                      value: 0,
+                      message: "Minutes cannot be negative.",
+                    },
+                    max: {
+                      value: 59,
+                      message: "Minutes must be between 0 and 59.",
+                    },
+                    validate: (value) =>
+                      Number.isInteger(Number(value)) ||
+                      "Minutes must be a whole number.",
+                  })}
+                />
+
+                {errors.availableMinutes && (
+                  <p className="form-error">
+                    {errors.availableMinutes.message}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="fixedCommitmentHours">
-                Fixed Commitment Hours
-              </label>
+          <div className="weekly-availability-input-section">
+            <div className="weekly-availability-input-section-header">
+              <div>
+                <span className="weekly-availability-input-icon">
+                  <Timer size={16} strokeWidth={1.8} />
+                </span>
 
-              <input
-                id="fixedCommitmentHours"
-                type="number"
-                min="0"
-                step="1"
-                placeholder="e.g. 20"
-                {...register("fixedCommitmentHours", {
-                  required: "Fixed commitment hours are required.",
-                  min: {
-                    value: 0,
-                    message: "Fixed commitment hours cannot be negative.",
-                  },
-                  validate: (value) =>
-                    Number.isInteger(Number(value)) ||
-                    "Fixed commitment hours must be a whole number.",
-                })}
-              />
-
-              {errors.fixedCommitmentHours && (
-                <p className="form-error">
-                  {errors.fixedCommitmentHours.message}
-                </p>
-              )}
+                <div>
+                  <h3>Fixed Commitments</h3>
+                  <p>Time already committed to responsibilities.</p>
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="fixedCommitmentMinutes">
-                Fixed Commitment Minutes
-              </label>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="fixedCommitmentHours">Hours</label>
 
-              <input
-                id="fixedCommitmentMinutes"
-                type="number"
-                min="0"
-                max="59"
-                step="1"
-                placeholder="e.g. 30"
-                {...register("fixedCommitmentMinutes", {
-                  required: "Fixed commitment minutes are required.",
-                  min: {
-                    value: 0,
-                    message: "Minutes cannot be negative.",
-                  },
-                  max: {
-                    value: 59,
-                    message: "Minutes must be between 0 and 59.",
-                  },
-                  validate: (value) => {
-                    if (!Number.isInteger(Number(value))) {
-                      return "Minutes must be a whole number.";
-                    }
+                <input
+                  id="fixedCommitmentHours"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="e.g. 20"
+                  {...register("fixedCommitmentHours", {
+                    required: "Fixed commitment hours are required.",
+                    min: {
+                      value: 0,
+                      message: "Fixed commitment hours cannot be negative.",
+                    },
+                    validate: (value) =>
+                      Number.isInteger(Number(value)) ||
+                      "Fixed commitment hours must be a whole number.",
+                  })}
+                />
 
-                    const availableTotalMinutes =
-                      Number(getValues("availableHours") || 0) * 60 +
-                      Number(getValues("availableMinutes") || 0);
+                {errors.fixedCommitmentHours && (
+                  <p className="form-error">
+                    {errors.fixedCommitmentHours.message}
+                  </p>
+                )}
+              </div>
 
-                    const fixedTotalMinutes =
-                      Number(getValues("fixedCommitmentHours") || 0) * 60 +
-                      Number(value);
+              <div className="form-group">
+                <label htmlFor="fixedCommitmentMinutes">Minutes</label>
 
-                    return (
-                      fixedTotalMinutes <= availableTotalMinutes ||
-                      "Fixed commitments cannot exceed available time."
-                    );
-                  },
-                })}
-              />
+                <input
+                  id="fixedCommitmentMinutes"
+                  type="number"
+                  min="0"
+                  max="59"
+                  step="1"
+                  placeholder="e.g. 30"
+                  {...register("fixedCommitmentMinutes", {
+                    required: "Fixed commitment minutes are required.",
+                    min: {
+                      value: 0,
+                      message: "Minutes cannot be negative.",
+                    },
+                    max: {
+                      value: 59,
+                      message: "Minutes must be between 0 and 59.",
+                    },
+                    validate: (value) => {
+                      if (!Number.isInteger(Number(value))) {
+                        return "Minutes must be a whole number.";
+                      }
 
-              {errors.fixedCommitmentMinutes && (
-                <p className="form-error">
-                  {errors.fixedCommitmentMinutes.message}
-                </p>
-              )}
+                      const availableTotalMinutes =
+                        Number(getValues("availableHours") || 0) * 60 +
+                        Number(getValues("availableMinutes") || 0);
+
+                      const fixedTotalMinutes =
+                        Number(getValues("fixedCommitmentHours") || 0) * 60 +
+                        Number(value);
+
+                      return (
+                        fixedTotalMinutes <= availableTotalMinutes ||
+                        "Fixed commitments cannot exceed available time."
+                      );
+                    },
+                  })}
+                />
+
+                {errors.fixedCommitmentMinutes && (
+                  <p className="form-error">
+                    {errors.fixedCommitmentMinutes.message}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="weekly-availability-summary">
-            <div>
+            <div className="weekly-summary-card weekly-summary-available">
               <span>Available Time</span>
+
               <strong>
                 {Math.floor(totalAvailableMinutes / 60)}h{" "}
                 {totalAvailableMinutes % 60}m
               </strong>
+
+              <small>Total weekly capacity</small>
             </div>
 
-            <div>
+            <div className="weekly-summary-card weekly-summary-fixed">
               <span>Fixed Commitments</span>
+
               <strong>
                 {Math.floor(totalFixedCommitmentMinutes / 60)}h{" "}
                 {totalFixedCommitmentMinutes % 60}m
               </strong>
+
+              <small>Already committed</small>
             </div>
 
-            <div>
+            <div
+              className={`weekly-summary-card weekly-summary-discretionary ${
+                discretionaryMinutes < 0 ? "weekly-summary-negative" : ""
+              }`}
+            >
               <span>Discretionary Time</span>
-              <strong
-                className={
-                  discretionaryMinutes < 0 ? "weekly-availability-negative" : ""
-                }
-              >
+
+              <strong>
                 {Math.floor(discretionaryMinutes / 60)}h{" "}
                 {Math.abs(discretionaryMinutes % 60)}m
               </strong>
+
+              <small>Available for planning</small>
             </div>
           </div>
 
           <div className="form-actions">
-            <button
+            <motion.button
               type="submit"
               className="primary-button"
               disabled={submitting}
+              whileTap={{ scale: 0.98 }}
             >
               {submitting ? "Saving..." : "Save Availability"}
-            </button>
+            </motion.button>
           </div>
         </form>
-      </section>
-    </main>
+      </motion.section>
+    </motion.main>
   );
 }
 

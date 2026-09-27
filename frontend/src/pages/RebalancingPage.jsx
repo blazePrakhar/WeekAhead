@@ -1,3 +1,11 @@
+import {
+  ArrowLeftRight,
+  Clock3,
+  Info,
+  Lightbulb,
+  Sparkles,
+} from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getLifeAreas } from "../api/lifeAreaApi";
@@ -69,36 +77,52 @@ function RebalancingPage() {
 
   if (loading) {
     return (
-      <main className="weekly-availability-page">
-        <section className="weekly-availability-header">
+      <main className="rebalancing-page">
+        <section className="rebalancing-loading">
+          <div className="rebalancing-loading-icon">
+            <ArrowLeftRight size={22} strokeWidth={1.8} />
+          </div>
+
           <div>
             <h1>Rebalancing Suggestions</h1>
-            <p className="page-description">
-              Review possible ways to redirect time based on your current week.
-            </p>
+            <p>Reviewing your current weekly balance...</p>
           </div>
         </section>
-
-        <div className="weekly-availability-status">
-          <p>Loading rebalancing suggestions...</p>
-        </div>
       </main>
     );
   }
 
   if (error) {
     return (
-      <main className="weekly-availability-page">
-        <section className="weekly-availability-header">
+      <main className="rebalancing-page">
+        <motion.header
+          className="rebalancing-header"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+        >
           <div>
+            <div className="rebalancing-eyebrow">
+              <ArrowLeftRight size={15} strokeWidth={1.9} />
+              <span>REBALANCE YOUR WEEK</span>
+            </div>
+
             <h1>Rebalancing Suggestions</h1>
-            <p className="page-description">
-              Review possible ways to redirect time based on your current week.
+
+            <p className="rebalancing-description">
+              Review possible ways to redirect time based on your current weekly
+              allocation and actual tracked time.
             </p>
           </div>
-        </section>
 
-        <div className="weekly-availability-error">
+          <div className="rebalancing-week-badge">
+            <ArrowLeftRight size={15} strokeWidth={1.8} />
+            <span>Current Week</span>
+          </div>
+        </motion.header>
+
+        <div className="rebalancing-feedback rebalancing-feedback-error">
+          <Info size={18} strokeWidth={1.8} />
           <p>{error}</p>
         </div>
       </main>
@@ -106,119 +130,204 @@ function RebalancingPage() {
   }
 
   return (
-    <main className="weekly-availability-page">
-      <section className="weekly-availability-header">
+    <main className="rebalancing-page">
+      <motion.header
+        className="rebalancing-header"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
         <div>
+          <div className="rebalancing-eyebrow">
+            <ArrowLeftRight size={15} strokeWidth={1.9} />
+            <span>REBALANCE YOUR WEEK</span>
+          </div>
+
           <h1>Rebalancing Suggestions</h1>
-          <p className="page-description">
-            Review possible ways to redirect time based on your current weekly allocation and actual tracked time.
+
+          <p className="rebalancing-description">
+            Review possible ways to redirect time based on your current weekly
+            allocation and actual tracked time.
           </p>
         </div>
-      </section>
 
-      <section className="life-areas-section">
-        <div className="section-header">
-          <h2>Summary</h2>
+        <div className="rebalancing-week-badge">
+          <ArrowLeftRight size={15} strokeWidth={1.8} />
+          <span>Current Week</span>
+        </div>
+      </motion.header>
+
+      <motion.section
+        className="rebalancing-summary-card"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.05 }}
+      >
+        <div className="rebalancing-card-header">
+          <div className="rebalancing-card-heading">
+            <span className="rebalancing-card-icon">
+              <Sparkles size={19} strokeWidth={1.8} />
+            </span>
+
+            <div>
+              <span className="rebalancing-section-label">WEEKLY BALANCE</span>
+
+              <h2>Review Your Week</h2>
+
+              <p>
+                Potential adjustments identified from your planned and tracked
+                time.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="life-areas-grid">
-          <article className="life-area-card">
-            <div className="life-area-card-header">
-              <div>
-                <h3>Suggestions</h3>
-                <p className="life-area-description">
-                  Potential rebalancing options identified by the backend.
-                </p>
-              </div>
-            </div>
-
-            <div className="life-area-details">
-              <div className="life-area-detail">
-                <span className="detail-label">Count</span>
-                <strong>{suggestions.length}</strong>
-              </div>
-            </div>
+        <div className="rebalancing-summary-grid">
+          <article className="rebalancing-stat rebalancing-stat-primary">
+            <span>Suggestions</span>
+            <strong>{suggestions.length}</strong>
+            <p>Potential adjustments identified</p>
           </article>
 
-          <article className="life-area-card">
-            <div className="life-area-card-header">
-              <div>
-                <h3>Potential Transfer</h3>
-                <p className="life-area-description">
-                  Total time represented by the current suggestions.
-                </p>
-              </div>
-            </div>
+          <article className="rebalancing-stat rebalancing-stat-transfer">
+            <span>Potential Transfer</span>
 
-            <div className="life-area-details">
-              <div className="life-area-detail">
-                <span className="detail-label">Time</span>
-                <strong>{formatHours(totalTransferableMinutes)}</strong>
-              </div>
-            </div>
+            <strong>{formatHours(totalTransferableMinutes)}</strong>
+
+            <p>Total time represented by suggestions</p>
           </article>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="life-areas-section">
-        <div className="section-header">
+      <section className="rebalancing-suggestions-section">
+        <div className="rebalancing-list-header">
           <div>
+            <span className="rebalancing-section-label">
+              POSSIBLE ADJUSTMENTS
+            </span>
+
             <h2>Suggestions</h2>
-            <p className="page-description">
-              These suggestions are calculated from your current allocation and tracked time.
+
+            <p>
+              These suggestions are calculated from your current allocation and
+              tracked time.
             </p>
           </div>
+
+          {suggestions.length > 0 && (
+            <div className="rebalancing-count">
+              <strong>{suggestions.length}</strong>
+              <span>
+                {suggestions.length === 1 ? "suggestion" : "suggestions"}
+              </span>
+            </div>
+          )}
         </div>
 
         {suggestions.length === 0 ? (
-          <div className="empty-state">
-            <p>No rebalancing suggestions are currently available.</p>
-          </div>
+          <motion.div
+            className="rebalancing-empty"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="rebalancing-empty-icon">
+              <Lightbulb size={22} strokeWidth={1.8} />
+            </div>
+
+            <h3>No rebalancing suggestions</h3>
+
+            <p>
+              Your current weekly data does not have any suggested time
+              transfers right now.
+            </p>
+          </motion.div>
         ) : (
-          <div className="life-areas-grid">
+          <div className="rebalancing-grid">
             {suggestions.map((suggestion, index) => {
               const sourceArea = lifeAreaMap.get(suggestion.sourceLifeAreaId);
+
               const destinationArea = lifeAreaMap.get(
                 suggestion.destinationLifeAreaId,
               );
 
               return (
-                <article
-                  className="life-area-card"
+                <motion.article
+                  className="rebalancing-card"
                   key={`${suggestion.sourceLifeAreaId}-${suggestion.destinationLifeAreaId}-${index}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.28,
+                    delay: index * 0.05,
+                  }}
                 >
-                  <div className="life-area-card-header">
+                  <div className="rebalancing-card-top">
+                    <div className="rebalancing-transfer-icon">
+                      <ArrowLeftRight size={18} strokeWidth={1.8} />
+                    </div>
+
+                    <span className="rebalancing-suggestion-badge">
+                      Suggested
+                    </span>
+                  </div>
+
+                  <div className="rebalancing-route">
                     <div>
-                      <h3>
+                      <span>FROM</span>
+
+                      <strong>
                         {sourceArea?.name ??
                           `Life Area #${suggestion.sourceLifeAreaId}`}
-                        {" -> "}
+                      </strong>
+                    </div>
+
+                    <ArrowLeftRight
+                      size={18}
+                      strokeWidth={1.7}
+                      className="rebalancing-route-arrow"
+                    />
+
+                    <div>
+                      <span>TO</span>
+
+                      <strong>
                         {destinationArea?.name ??
                           `Life Area #${suggestion.destinationLifeAreaId}`}
-                      </h3>
-                      <p className="life-area-description">
-                        Potential time transfer
-                      </p>
+                      </strong>
                     </div>
                   </div>
 
-                  <div className="life-area-details">
-                    <div className="life-area-detail">
-                      <span className="detail-label">Transferable</span>
+                  <div className="rebalancing-transfer">
+                    <div className="rebalancing-transfer-icon-small">
+                      <Clock3 size={15} strokeWidth={1.8} />
+                    </div>
+
+                    <div>
+                      <span>Transferable Time</span>
+
                       <strong>
                         {formatHours(suggestion.transferableMinutes)}
                       </strong>
                     </div>
                   </div>
 
-                  <p className="life-area-description">
-                    {suggestion.explanation}
-                  </p>
+                  <div className="rebalancing-explanation">
+                    <div className="rebalancing-explanation-icon">
+                      <Lightbulb size={15} strokeWidth={1.8} />
+                    </div>
 
-                  <p className="life-area-description">
-                    Suggestion only. WeekAhead will not automatically change your allocation.
-                  </p>
-                </article>
+                    <p>{suggestion.explanation}</p>
+                  </div>
+
+                  <div className="rebalancing-notice">
+                    <Info size={15} strokeWidth={1.8} />
+
+                    <p>
+                      Suggestion only. WeekAhead will not automatically change
+                      your allocation.
+                    </p>
+                  </div>
+                </motion.article>
               );
             })}
           </div>
