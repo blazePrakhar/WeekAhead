@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Layers3 } from "lucide-react";
 import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 
@@ -206,7 +207,7 @@ function LifeAreasPage() {
         <div>
           <div className="life-areas-title-row">
             <span className="life-areas-page-icon" aria-hidden="true">
-              ◈
+              <Layers3 size={22} strokeWidth={1.8} />
             </span>
 
             <div>
@@ -470,7 +471,7 @@ function LifeAreasPage() {
             transition={{ duration: 0.25 }}
           >
             <div className="life-areas-empty-icon" aria-hidden="true">
-              ◈
+              <Layers3 size={22} strokeWidth={1.8} />
             </div>
 
             <h3>No life areas yet</h3>
@@ -507,7 +508,11 @@ function LifeAreasPage() {
                 <div className="life-area-card-header">
                   <div className="life-area-card-title">
                     <span className="life-area-card-icon" aria-hidden="true">
-                      {lifeArea.isActive === false ? "—" : "◈"}
+                      {lifeArea.isActive === false ? (
+                        "—"
+                      ) : (
+                        <Layers3 size={17} strokeWidth={1.8} />
+                      )}
                     </span>
 
                     <div>
