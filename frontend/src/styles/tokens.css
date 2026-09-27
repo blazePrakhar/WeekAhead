@@ -1,0 +1,103 @@
+:root {
+  /* =========================================================
+     WeekAhead Design Tokens
+     ========================================================= */
+
+  /* Brand */
+  --wa-primary: #635bff;
+  --wa-primary-hover: #554de6;
+  --wa-primary-soft: #eeedff;
+  --wa-primary-border: #d9d7ff;
+
+  /* Supporting colors */
+  --wa-accent: #14b8a6;
+  --wa-accent-soft: #e6fffb;
+
+  --wa-success: #16a34a;
+  --wa-success-soft: #ecfdf3;
+
+  --wa-warning: #d97706;
+  --wa-warning-soft: #fff7ed;
+
+  --wa-danger: #dc2626;
+  --wa-danger-soft: #fef2f2;
+
+  /* Backgrounds */
+  --wa-bg: #f6f7fb;
+  --wa-surface: #ffffff;
+  --wa-surface-soft: #fafaff;
+  --wa-surface-muted: #f1f3f8;
+
+  /* Text */
+  --wa-text-primary: #171923;
+  --wa-text-secondary: #5f6675;
+  --wa-text-muted: #89909f;
+  --wa-text-inverse: #ffffff;
+
+  /* Borders */
+  --wa-border: #e5e7ee;
+  --wa-border-strong: #d7dae4;
+
+  /* Radius */
+  --wa-radius-sm: 8px;
+  --wa-radius-md: 12px;
+  --wa-radius-lg: 18px;
+  --wa-radius-xl: 24px;
+  --wa-radius-pill: 999px;
+
+  /* Shadows */
+  --wa-shadow-sm: 0 1px 2px rgb(15 23 42 / 4%);
+
+  --wa-shadow-md: 0 8px 24px rgb(15 23 42 / 7%);
+
+  --wa-shadow-lg: 0 18px 45px rgb(15 23 42 / 10%);
+
+  --wa-shadow-glass: 0 12px 40px rgb(15 23 42 / 8%);
+
+  /* Spacing */
+  --wa-space-1: 4px;
+  --wa-space-2: 8px;
+  --wa-space-3: 12px;
+  --wa-space-4: 16px;
+  --wa-space-5: 20px;
+  --wa-space-6: 24px;
+  --wa-space-8: 32px;
+  --wa-space-10: 40px;
+  --wa-space-12: 48px;
+  --wa-space-16: 64px;
+
+  /* Typography */
+  --wa-font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+
+  --wa-font-size-xs: 0.75rem;
+  --wa-font-size-sm: 0.875rem;
+  --wa-font-size-md: 1rem;
+  --wa-font-size-lg: 1.125rem;
+  --wa-font-size-xl: 1.375rem;
+  --wa-font-size-2xl: 1.75rem;
+  --wa-font-size-3xl: 2.25rem;
+
+  --wa-line-tight: 1.15;
+  --wa-line-normal: 1.5;
+  --wa-line-relaxed: 1.7;
+
+  /* Motion */
+  --wa-duration-fast: 150ms;
+  --wa-duration-normal: 250ms;
+  --wa-duration-slow: 350ms;
+
+  --wa-ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --wa-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout */
+  --wa-content-max-width: 1280px;
+  --wa-sidebar-width: 240px;
+
+  /* Glass surface */
+  --wa-glass-background: rgb(255 255 255 / 78%);
+  --wa-glass-border: rgb(255 255 255 / 70%);
+  --wa-glass-blur: 18px;
+}
