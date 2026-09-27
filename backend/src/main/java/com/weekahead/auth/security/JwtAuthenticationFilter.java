@@ -31,8 +31,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        String authorizationHeader
-                = request.getHeader("Authorization");
+        String authorizationHeader =
+                request.getHeader("Authorization");
 
         if (authorizationHeader == null
                 || !authorizationHeader.startsWith("Bearer ")) {
@@ -46,8 +46,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String email = jwtService.extractEmail(token);
 
-            UsernamePasswordAuthenticationToken authentication
-                    = new UsernamePasswordAuthenticationToken(
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
                             email,
                             null,
                             Collections.emptyList()
@@ -57,8 +57,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .setAuthentication(authentication);
 
         } catch (Exception exception) {
-            exception.printStackTrace();
-            // Invalid token — leave request unauthenticated.
+            // Invalid or expired JWT.
+            // Leave the request unauthenticated so Spring Security
+            // can return 401 for protected endpoints.
         }
 
         filterChain.doFilter(request, response);

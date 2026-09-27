@@ -1,0 +1,65 @@
+/* =========================================================
+   WeekAhead Motion Foundation
+   ========================================================= */
+
+.wa-motion-fade-up {
+  animation: wa-fade-up var(--wa-duration-slow) var(--wa-ease-standard) both;
+}
+
+.wa-motion-fade {
+  animation: wa-fade var(--wa-duration-normal) var(--wa-ease-standard) both;
+}
+
+.wa-motion-scale {
+  animation: wa-scale-in var(--wa-duration-normal) var(--wa-ease-emphasized)
+    both;
+}
+
+@keyframes wa-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes wa-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wa-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =========================================================
+   Accessibility
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

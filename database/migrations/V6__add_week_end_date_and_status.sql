@@ -1,0 +1,3 @@
+ALTER TABLE weeks
+    ADD COLUMN week_end_date DATE NULL,
+    ADD COLUMN status VARCHAR(50) NULL;

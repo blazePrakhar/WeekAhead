@@ -1,0 +1,363 @@
+package com.weekahead.timetracking.service;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.weekahead.audit.service.AuditLogService;
+import com.weekahead.auth.entity.User;
+import com.weekahead.auth.service.CurrentUserService;
+import com.weekahead.config.AnalyticsCacheInvalidationService;
+import com.weekahead.config.DashboardCacheInvalidationService;
+import com.weekahead.lifearea.entity.LifeArea;
+import com.weekahead.lifearea.repository.LifeAreaRepository;
+import com.weekahead.timetracking.dto.CreateTimeLogRequest;
+import com.weekahead.timetracking.dto.TimeLogResponse;
+import com.weekahead.timetracking.dto.UpdateTimeLogRequest;
+import com.weekahead.timetracking.entity.TimeLog;
+import com.weekahead.timetracking.repository.TimeLogRepository;
+
+@ExtendWith(MockitoExtension.class)
+class TimeLogServiceTest {
+
+    @Mock
+    private TimeLogRepository timeLogRepository;
+
+    @Mock
+    private LifeAreaRepository lifeAreaRepository;
+
+    @Mock
+    private CurrentUserService currentUserService;
+
+    @Mock
+    private DashboardCacheInvalidationService dashboardCacheInvalidationService;
+
+    @Mock
+    private AnalyticsCacheInvalidationService analyticsCacheInvalidationService;
+
+    @Mock
+    private AuditLogService auditLogService;
+
+    @Mock
+    private User user;
+
+    @Mock
+    private LifeArea lifeArea;
+
+    @InjectMocks
+    private TimeLogService timeLogService;
+
+    @Test
+    void shouldCreateTimeLogForCurrentUser() {
+        when(user.getId()).thenReturn(1L);
+        when(lifeArea.getId()).thenReturn(1L);
+        when(lifeArea.getName()).thenReturn("Work");
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(lifeAreaRepository.findByIdAndUserId(1L, 1L))
+                .thenReturn(Optional.of(lifeArea));
+
+        CreateTimeLogRequest request = new CreateTimeLogRequest(
+                1L,
+                LocalDate.of(2026, 9, 21),
+                90,
+                "Backend development",
+                "MANUAL"
+        );
+
+        TimeLog savedTimeLog = org.mockito.Mockito.mock(TimeLog.class);
+
+        when(savedTimeLog.getId()).thenReturn(1L);
+        when(savedTimeLog.getLifeArea()).thenReturn(lifeArea);
+        when(savedTimeLog.getLogDate()).thenReturn(request.logDate());
+        when(savedTimeLog.getDurationMinutes()).thenReturn(request.durationMinutes());
+        when(savedTimeLog.getNote()).thenReturn(request.note());
+        when(savedTimeLog.getSource()).thenReturn(request.source());
+
+        when(timeLogRepository.save(any(TimeLog.class)))
+                .thenReturn(savedTimeLog);
+
+        TimeLogResponse response = timeLogService.create(request);
+
+        assertNotNull(response);
+        assertEquals(1L, response.id());
+        assertEquals(1L, response.lifeAreaId());
+        assertEquals("Work", response.lifeAreaName());
+        assertEquals(LocalDate.of(2026, 9, 21), response.logDate());
+        assertEquals(90, response.durationMinutes());
+        assertEquals("Backend development", response.note());
+        assertEquals("MANUAL", response.source());
+
+        verify(timeLogRepository).save(any(TimeLog.class));
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "TIME_LOG_CREATED",
+                        "TIME_LOG",
+                        1L,
+                        "Time log created"
+                );
+    }
+
+    @Test
+    void shouldRejectTimeLogWhenLifeAreaDoesNotBelongToCurrentUser() {
+        when(user.getId()).thenReturn(1L);
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(lifeAreaRepository.findByIdAndUserId(99L, 1L))
+                .thenReturn(Optional.empty());
+
+        CreateTimeLogRequest request = new CreateTimeLogRequest(
+                99L,
+                LocalDate.of(2026, 9, 21),
+                90,
+                "Backend development",
+                "MANUAL"
+        );
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> timeLogService.create(request)
+        );
+
+        assertEquals("Life area not found", exception.getMessage());
+
+        verify(timeLogRepository, never()).save(any());
+        verifyNoInteractions(auditLogService);
+    }
+
+    @Test
+    void shouldUpdateOwnTimeLog() {
+        when(user.getId()).thenReturn(1L);
+        when(lifeArea.getId()).thenReturn(1L);
+        when(lifeArea.getName()).thenReturn("Work");
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+
+        TimeLog timeLog = org.mockito.Mockito.mock(TimeLog.class);
+
+        when(timeLog.getId()).thenReturn(1L);
+        when(timeLog.getLifeArea()).thenReturn(lifeArea);
+
+        when(timeLogRepository.findByIdAndUserId(1L, 1L))
+                .thenReturn(Optional.of(timeLog));
+
+        when(lifeAreaRepository.findByIdAndUserId(1L, 1L))
+                .thenReturn(Optional.of(lifeArea));
+
+        when(timeLogRepository.save(timeLog))
+                .thenReturn(timeLog);
+
+        UpdateTimeLogRequest request = new UpdateTimeLogRequest(
+                1L,
+                LocalDate.of(2026, 9, 21),
+                120,
+                "Updated note",
+                "MANUAL"
+        );
+
+        when(timeLog.getLogDate()).thenReturn(request.logDate());
+        when(timeLog.getDurationMinutes()).thenReturn(request.durationMinutes());
+        when(timeLog.getNote()).thenReturn(request.note());
+        when(timeLog.getSource()).thenReturn(request.source());
+
+        TimeLogResponse response = timeLogService.update(1L, request);
+
+        assertEquals(1L, response.id());
+        assertEquals(1L, response.lifeAreaId());
+        assertEquals("Work", response.lifeAreaName());
+        assertEquals(LocalDate.of(2026, 9, 21), response.logDate());
+        assertEquals(120, response.durationMinutes());
+        assertEquals("Updated note", response.note());
+        assertEquals("MANUAL", response.source());
+
+        verify(timeLogRepository).save(timeLog);
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "TIME_LOG_UPDATED",
+                        "TIME_LOG",
+                        1L,
+                        "Time log updated"
+                );
+    }
+
+    @Test
+    void shouldRejectUpdateWhenTimeLogDoesNotBelongToCurrentUser() {
+        when(user.getId()).thenReturn(1L);
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(timeLogRepository.findByIdAndUserId(99L, 1L))
+                .thenReturn(Optional.empty());
+
+        UpdateTimeLogRequest request = new UpdateTimeLogRequest(
+                1L,
+                LocalDate.of(2026, 9, 21),
+                120,
+                "Updated note",
+                "MANUAL"
+        );
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> timeLogService.update(99L, request)
+        );
+
+        assertEquals("Time log not found", exception.getMessage());
+
+        verify(timeLogRepository, never()).save(any());
+        verifyNoInteractions(auditLogService);
+    }
+
+    @Test
+    void shouldDeleteOwnTimeLog() {
+        when(user.getId()).thenReturn(1L);
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+
+        TimeLog timeLog = org.mockito.Mockito.mock(TimeLog.class);
+
+        when(timeLog.getId()).thenReturn(1L);
+
+        when(timeLogRepository.findByIdAndUserId(1L, 1L))
+                .thenReturn(Optional.of(timeLog));
+
+        timeLogService.delete(1L);
+
+        verify(timeLogRepository).delete(timeLog);
+
+        verify(auditLogService)
+                .log(
+                        user,
+                        "TIME_LOG_DELETED",
+                        "TIME_LOG",
+                        1L,
+                        "Time log deleted"
+                );
+    }
+
+    @Test
+    void shouldRejectDeleteWhenTimeLogDoesNotBelongToCurrentUser() {
+        when(user.getId()).thenReturn(1L);
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+        when(timeLogRepository.findByIdAndUserId(99L, 1L))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> timeLogService.delete(99L)
+        );
+
+        assertEquals("Time log not found", exception.getMessage());
+
+        verify(timeLogRepository, never()).delete(any());
+        verifyNoInteractions(auditLogService);
+    }
+
+    @Test
+    void shouldListTimeLogsWithinDateRange() {
+        when(user.getId()).thenReturn(1L);
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+
+        TimeLog first = org.mockito.Mockito.mock(TimeLog.class);
+        TimeLog second = org.mockito.Mockito.mock(TimeLog.class);
+
+        when(first.getLifeArea()).thenReturn(lifeArea);
+        when(first.getDurationMinutes()).thenReturn(90);
+
+        when(second.getLifeArea()).thenReturn(lifeArea);
+        when(second.getDurationMinutes()).thenReturn(60);
+
+        when(timeLogRepository
+                .findAllByUserIdAndLogDateBetweenOrderByLogDateDescIdDesc(
+                        1L,
+                        LocalDate.of(2026, 9, 20),
+                        LocalDate.of(2026, 9, 21)
+                ))
+                .thenReturn(List.of(first, second));
+
+        List<TimeLogResponse> responses = timeLogService.findAll(
+                LocalDate.of(2026, 9, 20),
+                LocalDate.of(2026, 9, 21),
+                null
+        );
+
+        assertEquals(2, responses.size());
+        assertEquals(90, responses.get(0).durationMinutes());
+        assertEquals(60, responses.get(1).durationMinutes());
+
+        verifyNoInteractions(auditLogService);
+    }
+
+    @Test
+    void shouldFilterTimeLogsByLifeArea() {
+        when(user.getId()).thenReturn(1L);
+        when(lifeArea.getId()).thenReturn(1L);
+        when(lifeArea.getName()).thenReturn("Work");
+        when(currentUserService.getCurrentUser()).thenReturn(user);
+
+        when(lifeAreaRepository.findByIdAndUserId(1L, 1L))
+                .thenReturn(Optional.of(lifeArea));
+
+        TimeLog timeLog = org.mockito.Mockito.mock(TimeLog.class);
+
+        when(timeLog.getId()).thenReturn(1L);
+        when(timeLog.getLifeArea()).thenReturn(lifeArea);
+        when(timeLog.getDurationMinutes()).thenReturn(90);
+
+        when(timeLogRepository
+                .findAllByUserIdAndLogDateBetweenAndLifeAreaIdOrderByLogDateDescIdDesc(
+                        1L,
+                        LocalDate.of(2026, 9, 20),
+                        LocalDate.of(2026, 9, 21),
+                        1L
+                ))
+                .thenReturn(List.of(timeLog));
+
+        List<TimeLogResponse> responses = timeLogService.findAll(
+                LocalDate.of(2026, 9, 20),
+                LocalDate.of(2026, 9, 21),
+                1L
+        );
+
+        assertEquals(1, responses.size());
+        assertEquals(1L, responses.get(0).id());
+        assertEquals(1L, responses.get(0).lifeAreaId());
+        assertEquals("Work", responses.get(0).lifeAreaName());
+        assertEquals(90, responses.get(0).durationMinutes());
+
+        verify(lifeAreaRepository).findByIdAndUserId(1L, 1L);
+        verifyNoInteractions(auditLogService);
+    }
+
+    @Test
+    void shouldRejectInvalidDateRange() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> timeLogService.findAll(
+                        LocalDate.of(2026, 9, 22),
+                        LocalDate.of(2026, 9, 21),
+                        null
+                )
+        );
+
+        assertEquals(
+                "From date cannot be after to date",
+                exception.getMessage()
+        );
+
+        verifyNoInteractions(timeLogRepository);
+        verifyNoInteractions(auditLogService);
+    }
+}

@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.weekahead.auth.service.CurrentUserService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 @RestController
 @RequestMapping("/api/auth")
+@SecurityRequirement(name = "bearerAuth")
 public class AuthenticatedUserController {
 
     private final CurrentUserService currentUserService;

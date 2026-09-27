@@ -1,13 +1,13 @@
-let accessToken = null;
+const ACCESS_TOKEN_KEY = "weekahead_access_token";
 
 export function setAccessToken(token) {
-  accessToken = token;
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
 }
 
 export function getAccessToken() {
-  return accessToken;
+  return sessionStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
 export function clearAccessToken() {
-  accessToken = null;
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
 }
