@@ -1,3 +1,13 @@
+import {
+  CalendarDays,
+  Clock3,
+  FileText,
+  Pencil,
+  Plus,
+  Timer,
+  Trash2,
+} from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -210,84 +220,129 @@ function TimeLogsPage() {
 
   if (loading) {
     return (
-      <main className="weekly-availability-page">
-        <section className="weekly-availability-header">
+      <main className="time-logs-page">
+        <section className="time-logs-loading">
+          <div className="time-logs-loading-icon">
+            <Timer size={22} strokeWidth={1.8} />
+          </div>
+
           <div>
             <h1>Time Tracking</h1>
-            <p className="page-description">
-              Record the actual time you spend on your life areas.
-            </p>
+            <p>Loading your weekly time logs...</p>
           </div>
         </section>
-
-        <div className="weekly-availability-status">
-          <p>Loading time tracking...</p>
-        </div>
       </main>
     );
   }
 
   return (
-    <main className="weekly-availability-page">
-      <section className="weekly-availability-header">
+    <main className="time-logs-page">
+      <motion.header
+        className="time-logs-header"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
         <div>
+          <div className="time-logs-eyebrow">
+            <Timer size={15} strokeWidth={1.9} />
+            <span>TRACK YOUR WEEK</span>
+          </div>
+
           <h1>Time Tracking</h1>
-          <p className="page-description">
-            Record the actual time you spend on your life areas.
+
+          <p className="time-logs-description">
+            Record the actual time you spend across your life areas.
           </p>
         </div>
-      </section>
+
+        <div className="time-logs-week-badge">
+          <CalendarDays size={15} strokeWidth={1.8} />
+          <span>This Week</span>
+        </div>
+      </motion.header>
 
       {success && (
-        <div className="weekly-availability-success">
+        <motion.div
+          className="time-logs-feedback time-logs-feedback-success"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Clock3 size={18} strokeWidth={1.8} />
           <p>{success}</p>
-        </div>
+        </motion.div>
       )}
 
       {error && (
-        <div className="weekly-availability-error">
+        <motion.div
+          className="time-logs-feedback time-logs-feedback-error"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Clock3 size={18} strokeWidth={1.8} />
           <p>{error}</p>
-        </div>
+        </motion.div>
       )}
 
-      <section className="life-area-form-card">
-        <div className="life-area-form-header">
-          <h2>{editingId ? "Edit Time Log" : "Quick Time Log"}</h2>
+      <motion.section
+        className="time-logs-form-card"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.05 }}
+      >
+        <div className="time-logs-form-header">
+          <div className="time-logs-form-heading">
+            <span className="time-logs-form-icon">
+              {editingId ? (
+                <Pencil size={19} strokeWidth={1.8} />
+              ) : (
+                <Plus size={19} strokeWidth={1.8} />
+              )}
+            </span>
 
-          <p>
-            {editingId
-              ? "Update the details of this time log."
-              : "Record how much time you spent on a life area."}
-          </p>
+            <div>
+              <span className="time-logs-section-label">
+                {editingId ? "UPDATE ENTRY" : "QUICK ENTRY"}
+              </span>
+
+              <h2>{editingId ? "Edit Time Log" : "Quick Time Log"}</h2>
+
+              <p>
+                {editingId
+                  ? "Update the details of this time log."
+                  : "Record how much time you spent on a life area."}
+              </p>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-          <div className="form-group">
-            <label htmlFor="lifeAreaId">Life Area</label>
+          <div className="time-logs-form-grid">
+            <div className="form-group time-logs-field-wide">
+              <label htmlFor="lifeAreaId">Life Area</label>
 
-            <select
-              id="lifeAreaId"
-              {...register("lifeAreaId", {
-                required: "Life area is required.",
-              })}
-            >
-              <option value="">Select a life area</option>
+              <select
+                id="lifeAreaId"
+                {...register("lifeAreaId", {
+                  required: "Life area is required.",
+                })}
+              >
+                <option value="">Select a life area</option>
 
-              {lifeAreas
-                .filter((lifeArea) => lifeArea.isActive !== false)
-                .map((lifeArea) => (
-                  <option key={lifeArea.id} value={lifeArea.id}>
-                    {lifeArea.name}
-                  </option>
-                ))}
-            </select>
+                {lifeAreas
+                  .filter((lifeArea) => lifeArea.isActive !== false)
+                  .map((lifeArea) => (
+                    <option key={lifeArea.id} value={lifeArea.id}>
+                      {lifeArea.name}
+                    </option>
+                  ))}
+              </select>
 
-            {errors.lifeAreaId && (
-              <p className="form-error">{errors.lifeAreaId.message}</p>
-            )}
-          </div>
+              {errors.lifeAreaId && (
+                <p className="form-error">{errors.lifeAreaId.message}</p>
+              )}
+            </div>
 
-          <div className="form-row">
             <div className="form-group">
               <label htmlFor="logDate">Date</label>
 
@@ -305,31 +360,35 @@ function TimeLogsPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="durationMinutes">Duration (minutes)</label>
+              <label htmlFor="durationMinutes">Duration</label>
 
-              <input
-                id="durationMinutes"
-                type="number"
-                min="1"
-                step="1"
-                placeholder="e.g. 90"
-                {...register("durationMinutes", {
-                  required: "Duration is required.",
-                  validate: (value) => {
-                    const number = Number(value);
+              <div className="time-logs-duration-wrapper">
+                <input
+                  id="durationMinutes"
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="e.g. 90"
+                  {...register("durationMinutes", {
+                    required: "Duration is required.",
+                    validate: (value) => {
+                      const number = Number(value);
 
-                    if (!Number.isInteger(number)) {
-                      return "Duration must be a whole number.";
-                    }
+                      if (!Number.isInteger(number)) {
+                        return "Duration must be a whole number.";
+                      }
 
-                    if (number <= 0) {
-                      return "Duration must be greater than 0.";
-                    }
+                      if (number <= 0) {
+                        return "Duration must be greater than 0.";
+                      }
 
-                    return true;
-                  },
-                })}
-              />
+                      return true;
+                    },
+                  })}
+                />
+
+                <span>min</span>
+              </div>
 
               {errors.durationMinutes && (
                 <p className="form-error">{errors.durationMinutes.message}</p>
@@ -343,40 +402,55 @@ function TimeLogsPage() {
                 <option value="MANUAL">Manual</option>
               </select>
             </div>
+
+            <div className="form-group time-logs-note-field">
+              <label htmlFor="note">Note</label>
+
+              <div className="time-logs-note-wrapper">
+                <FileText size={16} strokeWidth={1.8} />
+
+                <textarea
+                  id="note"
+                  rows="3"
+                  maxLength="500"
+                  placeholder="What did you spend this time on?"
+                  {...register("note", {
+                    maxLength: {
+                      value: 500,
+                      message: "Note must not exceed 500 characters.",
+                    },
+                  })}
+                />
+              </div>
+
+              {errors.note && (
+                <p className="form-error">{errors.note.message}</p>
+              )}
+            </div>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="note">Note (optional)</label>
-
-            <textarea
-              id="note"
-              rows="3"
-              maxLength="500"
-              placeholder="What did you spend this time on?"
-              {...register("note", {
-                maxLength: {
-                  value: 500,
-                  message: "Note must not exceed 500 characters.",
-                },
-              })}
-            />
-
-            {errors.note && <p className="form-error">{errors.note.message}</p>}
-          </div>
-
-          <div className="form-actions">
+          <div className="time-logs-form-actions">
             <button
               type="submit"
               className="primary-button"
               disabled={submitting || lifeAreas.length === 0}
             >
-              {submitting
-                ? editingId
-                  ? "Updating..."
-                  : "Logging..."
-                : editingId
-                  ? "Update Time Log"
-                  : "Log Time"}
+              {submitting ? (
+                <>
+                  <Timer size={16} strokeWidth={2} className="time-logs-spin" />
+                  {editingId ? "Updating..." : "Logging..."}
+                </>
+              ) : (
+                <>
+                  {editingId ? (
+                    <Pencil size={16} strokeWidth={1.9} />
+                  ) : (
+                    <Plus size={16} strokeWidth={1.9} />
+                  )}
+
+                  {editingId ? "Update Time Log" : "Log Time"}
+                </>
+              )}
             </button>
 
             {editingId && (
@@ -403,45 +477,77 @@ function TimeLogsPage() {
             )}
           </div>
         </form>
-      </section>
+      </motion.section>
 
-      <section className="life-areas-section">
-        <div className="section-header">
-          <h2>This Week's Time Logs</h2>
+      <section className="time-logs-list-section">
+        <div className="time-logs-list-header">
+          <div>
+            <span className="time-logs-section-label">WEEKLY JOURNAL</span>
+            <h2>This Week's Time Logs</h2>
+            <p>Review the time you've recorded across your life areas.</p>
+          </div>
+
+          <div className="time-logs-count">
+            <strong>{timeLogs.length}</strong>
+            <span>{timeLogs.length === 1 ? "entry" : "entries"}</span>
+          </div>
         </div>
 
         {timeLogs.length === 0 ? (
-          <div className="empty-state">
-            <p>No time logs found for this week.</p>
-            <p>Use the form above to record your first log.</p>
+          <div className="time-logs-empty">
+            <div className="time-logs-empty-icon">
+              <Timer size={22} strokeWidth={1.8} />
+            </div>
+
+            <h3>No time logs yet</h3>
+
+            <p>
+              Use the form above to record your first time entry for this week.
+            </p>
           </div>
         ) : (
-          <div className="life-areas-grid">
-            {timeLogs.map((timeLog) => (
-              <article className="life-area-card" key={timeLog.id}>
-                <div className="life-area-card-header">
-                  <div>
-                    <h3>{timeLog.lifeAreaName}</h3>
+          <div className="time-logs-grid">
+            {timeLogs.map((timeLog, index) => (
+              <motion.article
+                className="time-log-card"
+                key={timeLog.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.25,
+                  delay: index * 0.04,
+                }}
+              >
+                <div className="time-log-card-header">
+                  <div className="time-log-card-title">
+                    <span className="time-log-card-icon">
+                      <Clock3 size={17} strokeWidth={1.8} />
+                    </span>
 
-                    <p className="life-area-description">{timeLog.logDate}</p>
+                    <div>
+                      <h3>{timeLog.lifeAreaName}</h3>
+                      <p>{timeLog.logDate}</p>
+                    </div>
                   </div>
 
-                  <span className="status-badge">{timeLog.source}</span>
+                  <span className="time-log-source-badge">
+                    {timeLog.source}
+                  </span>
                 </div>
 
-                <div className="life-area-details">
-                  <div className="life-area-detail">
-                    <span className="detail-label">Duration</span>
-                    <strong>{formatDuration(timeLog.durationMinutes)}</strong>
-                  </div>
+                <div className="time-log-duration">
+                  <span>Duration</span>
+                  <strong>{formatDuration(timeLog.durationMinutes)}</strong>
+                </div>
 
-                  <div className="life-area-detail">
-                    <span className="detail-label">Minutes</span>
+                <div className="time-log-details">
+                  <div>
+                    <span>Minutes</span>
                     <strong>{timeLog.durationMinutes}</strong>
                   </div>
 
-                  <div className="life-area-detail">
-                    <span className="detail-label">Logged</span>
+                  <div>
+                    <span>Logged</span>
                     <strong>
                       {new Date(timeLog.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -452,15 +558,19 @@ function TimeLogsPage() {
                 </div>
 
                 {timeLog.note && (
-                  <p className="life-area-description">{timeLog.note}</p>
+                  <div className="time-log-note">
+                    <FileText size={15} strokeWidth={1.8} />
+                    <p>{timeLog.note}</p>
+                  </div>
                 )}
 
-                <div className="life-area-actions">
+                <div className="time-log-actions">
                   <button
                     type="button"
                     className="secondary-button"
                     onClick={() => handleEdit(timeLog)}
                   >
+                    <Pencil size={15} strokeWidth={1.8} />
                     Edit
                   </button>
 
@@ -469,10 +579,11 @@ function TimeLogsPage() {
                     className="danger-button"
                     onClick={() => handleDelete(timeLog.id)}
                   >
+                    <Trash2 size={15} strokeWidth={1.8} />
                     Delete
                   </button>
                 </div>
-              </article>
+              </motion.article>
             ))}
           </div>
         )}
