@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { NavLink, useNavigate } from "react-router-dom";
+import {
+  ArrowLeftRight,
+  CalendarClock,
+  CalendarRange,
+  Layers3,
+  LayoutDashboard,
+  LogOut,
+  Sparkles,
+  Timer,
+} from "lucide-react";
 
 import { useAuth } from "../../context/useAuth";
 
@@ -8,37 +18,37 @@ const navigationItems = [
   {
     label: "Dashboard",
     path: "/dashboard",
-    icon: "⌂",
+    icon: LayoutDashboard,
   },
   {
     label: "Life Areas",
     path: "/life-areas",
-    icon: "◈",
+    icon: Layers3,
   },
   {
     label: "Weekly Availability",
     path: "/weekly-availability",
-    icon: "◷",
+    icon: CalendarClock,
   },
   {
     label: "Time Allocation",
     path: "/time-allocation",
-    icon: "▦",
+    icon: CalendarRange,
   },
   {
     label: "Time Tracking",
     path: "/time-logs",
-    icon: "◉",
+    icon: Timer,
   },
   {
     label: "Insights",
     path: "/insights",
-    icon: "✦",
+    icon: Sparkles,
   },
   {
     label: "Rebalancing",
     path: "/rebalancing",
-    icon: "↗",
+    icon: ArrowLeftRight,
   },
 ];
 
@@ -158,7 +168,7 @@ function AppNavigation() {
                       delay: index * 0.01,
                     }}
                   >
-                    {item.icon}
+                    <item.icon size={18} strokeWidth={1.8} aria-hidden="true" />
                   </motion.span>
 
                   <span className="app-navigation-link-label">
@@ -198,7 +208,7 @@ function AppNavigation() {
             whileTap={{ scale: 0.98 }}
           >
             <span className="app-navigation-logout-icon" aria-hidden="true">
-              ↪
+              <LogOut size={18} strokeWidth={1.8} />
             </span>
 
             <span>Logout</span>
