@@ -170,7 +170,7 @@ WeekAhead/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/<your-username>/WeekAhead.git
+git clone https://github.com/blazePrakhar/WeekAhead.git
 cd WeekAhead
 
 # 2. Create your environment file
